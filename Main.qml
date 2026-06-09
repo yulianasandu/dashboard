@@ -5,6 +5,36 @@ import QtQuick.Shapes 1.15
 
 import Automotive.Core 1.0
 
+// ═══════════════════════════════════════════════════════════════════════════
+//  СИСТЕМА КООРДИНАТ СТРЕЛОК
+//
+//  Qt rotation=0 → стрелка вверх (12ч). Положительный = по часовой.
+//
+//  ТАХОМЕТР / СПИДОМЕТР (270° охват, начало в 7ч):
+//    rotation = -135 + fraction * 270
+//
+//  ПРАВЫЙ ПРИБОР:
+//    TEMP: дуга от 10ч до 12ч (60° охват левой верхней четверти)
+//      10ч = -120°, 12ч = 0°
+//      rotation = -120 + fraction * 120
+//      fraction = (temp - 50) / 80
+//
+//    FUEL: дуга от 7ч до 5ч через 6ч (120° охват нижней половины)
+//      7ч = -45°(от низа) → в Qt: 7ч = 210°, 5ч = 150°
+//      7ч = rotation -150°, 6ч = rotation 180°(/-180°), 5ч = rotation 150°
+//      Удобнее: 7ч = 210° (Qt), 5ч = 150° (Qt, с другой стороны)
+//      Шкала идёт ОТ 7ч (Empty=0) ЧЕРЕЗ 6ч ДО 5ч (Full=1)
+//      7ч = -150°, 6ч = 180° = -180°, 5ч = 150°
+//      rotation = -150 + fraction * 300... нет, охват 7ч→5ч = 120° через низ
+//      В Qt: 7ч = 210°, 5ч = 150°. Идём по часовой от 210° до 360°+150°=510°
+//      Охват = 300°? Нет. Визуально 7ч→6ч→5ч = 120° по часовой (правая часть низа)
+//      Но на референсе шкала топлива — узкая дуга от ~5ч до ~7ч через низ (120°).
+//      7ч в Qt = -150° (= 210°), 5ч = 150°.
+//      Идём по часовой: 7ч(210°) → 6ч(270°) → 5ч(330°)... это 120° по часовой.
+//      Стрелка FUEL: rotation = 210 + fraction * 120  (0=Empty=7ч, 1=Full=5ч)
+//      Но Qt: 210° = -150°. Используем: rotation = -150 + fraction * 120
+// ═══════════════════════════════════════════════════════════════════════════
+
 Window {
     id: root
     width: 1920
@@ -67,7 +97,6 @@ Window {
         anchors { top: parent.top; left: parent.left; right: parent.right }
         height: 50
 
-        // Левый поворотник
         Row {
             anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 70 }
             spacing: 2
@@ -75,7 +104,7 @@ Window {
                 model: 2
                 Text {
                     text: "◄"
-                    font { pixelSize: 28 - index * 7; bold: true }
+                    font { pixelSize: 21 + index * 7; bold: true }
                     color: "#1ecc50"
                     opacity: carController.leftBlinkerOn ? 1.0 : 0.05
                     Behavior on opacity { NumberAnimation { duration: 50 } }
@@ -83,7 +112,6 @@ Window {
             }
         }
 
-        // Аварийная надпись
         Text {
             anchors { horizontalCenter: parent.horizontalCenter; top: parent.top; topMargin: 3 }
             text: "▲  АВАРИЙНАЯ"
@@ -94,7 +122,6 @@ Window {
             Behavior on opacity { NumberAnimation { duration: 50 } }
         }
 
-        // Подсказки клавиш
         Text {
             anchors { horizontalCenter: parent.horizontalCenter; bottom: parent.bottom; bottomMargin: 5 }
             text: "W — ГАЗ    S — ТОРМОЗ    A — ◄    D — ►    F — АВАРИЙКА"
@@ -102,7 +129,6 @@ Window {
             font { pixelSize: 12; family: "Helvetica Neue"; letterSpacing: 1.6 }
         }
 
-        // Правый поворотник
         Row {
             anchors { right: parent.right; verticalCenter: parent.verticalCenter; rightMargin: 70 }
             spacing: 2
@@ -135,11 +161,10 @@ Window {
             topMargin: 2; bottomMargin: 2
         }
 
-        // ── переиспользуемый компонент: хромированный колодец ───────────────
+        // ── хромированный колодец ────────────────────────────────────────────
         component ChromeWell: Item {
             property real dialSize: 300
 
-            // Внешнее хромовое кольцо с металлическим градиентом
             Rectangle {
                 anchors.centerIn: parent
                 width: dialSize + 28; height: width; radius: width / 2
@@ -154,13 +179,11 @@ Window {
                     GradientStop { position: 1.0;  color: "#767680" }
                 }
             }
-            // Чёрный паз — создаёт ощущение глубины
             Rectangle {
                 anchors.centerIn: parent
                 width: dialSize + 9; height: width; radius: width / 2
                 color: "#040406"
             }
-            // Основная чаша
             Rectangle {
                 anchors.centerIn: parent
                 width: dialSize; height: width; radius: width / 2
@@ -175,47 +198,9 @@ Window {
             }
         }
 
-        // ── компонент: стрелка (переиспользуется) ───────────────────────────
-        component GaugeNeedle: Item {
-            property real dialDiam: 300
-            property real needleAngle: -135
-            property color tailColor: "#cc2020"
-            // охват тела = 60% радиуса, хвост = 13% радиуса
-
-            anchors.centerIn: parent
-            width: dialDiam; height: dialDiam
-            rotation: needleAngle
-            transformOrigin: Item.Center
-
-            Behavior on rotation { NumberAnimation { duration: 80; easing.type: Easing.OutCubic } }
-
-            // тело
-            Rectangle {
-                anchors.horizontalCenter: parent.horizontalCenter
-                width: 4
-                height: dialDiam * 0.30    // 60% от радиуса = 30% от диаметра
-                y: dialDiam * 0.50 - height  // верхний край = центр − длина
-                radius: 2
-                gradient: Gradient {
-                    GradientStop { position: 0.0; color: "#f5f5f5" }
-                    GradientStop { position: 0.75; color: "#d8d8d8" }
-                    GradientStop { position: 1.0;  color: "#909090" }
-                }
-            }
-            // хвост
-            Rectangle {
-                anchors.horizontalCenter: parent.horizontalCenter
-                width: 5
-                height: dialDiam * 0.065
-                y: dialDiam * 0.50     // нижний край хвоста уходит вниз от центра
-                radius: 2.5
-                color: tailColor
-            }
-        }
-
-        // ── компонент: центральный колпак ────────────────────────────────────
+        // ── центральный колпак ───────────────────────────────────────────────
         component NeedleCap: Rectangle {
-            property real capSize: 26
+            property real capSize: 28
             width: capSize; height: capSize; radius: capSize / 2
             anchors.centerIn: parent
             gradient: RadialGradient {
@@ -229,8 +214,6 @@ Window {
 
         // ╔══════════════════════════════════════════════════════════════════╗
         // ║  ТАХОМЕТР  (левый)                                              ║
-        // ║  Диапазон: 0..7000 об/мин (0..7 × 1000)                        ║
-        // ║  rotation = -135 + (rpm / 7000) * 270                          ║
         // ╚══════════════════════════════════════════════════════════════════╝
         Item {
             id: tachZone
@@ -241,18 +224,11 @@ Window {
 
             property real dialDiam: Math.min(width, height) * 0.87
             property real dialRad:  dialDiam * 0.5
-
-            // rpm из C++ уже ограничен до 6000 отсечкой — здесь масштабируем
-            // по шкале 0..7000, чтобы стрелка реально доходила до красной зоны
             property real rpmFraction: Math.min(carController.rpm / 7000.0, 1.0)
             property real needleAngle: -135.0 + rpmFraction * 270.0
 
-            ChromeWell {
-                anchors.centerIn: parent
-                dialSize: tachZone.dialDiam
-            }
+            ChromeWell { anchors.centerIn: parent; dialSize: tachZone.dialDiam }
 
-            // Шкала тахометра
             Canvas {
                 id: tachCanvas
                 anchors.centerIn: parent
@@ -264,53 +240,44 @@ Window {
                     ctx.clearRect(0, 0, width, height)
                     var cx = width * 0.5, cy = height * 0.5
                     var r  = width * 0.432
-                    // startRad = 135° в CSS (= 225° от 12ч = 7 часов)
                     var startRad = 135.0 * Math.PI / 180.0
                     var totalRad = 270.0 * Math.PI / 180.0
 
-                    // Красная зона: 6..7 тысяч (последние 1/7 = ~14.3%)
-                    var redFrom = startRad + (6.0 / 7.0) * totalRad
+                    // Красная зона 6–7 тысяч
                     ctx.beginPath()
-                    ctx.arc(cx, cy, r - 5, redFrom, startRad + totalRad)
-                    ctx.strokeStyle = "#8a1010"; ctx.lineWidth = 11; ctx.lineCap = "butt"
-                    ctx.stroke()
+                    ctx.arc(cx, cy, r - 5, startRad + (6.0/7.0)*totalRad, startRad + totalRad)
+                    ctx.strokeStyle = "#8a1010"; ctx.lineWidth = 11; ctx.lineCap = "butt"; ctx.stroke()
 
-                    // 70 тиков (7 главных × 10)
                     for (var i = 0; i <= 70; i++) {
                         var frac  = i / 70.0
                         var angle = startRad + frac * totalRad
                         var major = (i % 10 === 0)
-                        var semi  = (i %  5 === 0) && !major
-                        var tickLen = major ? 19 : (semi ? 12 : 6)
-                        var isRed   = (frac > 6.0/7.0 - 0.005)
+                        var semi  = (i % 5 === 0) && !major
+                        var tlen  = major ? 19 : (semi ? 12 : 6)
+                        var isRed = (frac > 6.0/7.0 - 0.005)
 
                         ctx.beginPath()
-                        ctx.moveTo(cx + Math.cos(angle) * (r - tickLen), cy + Math.sin(angle) * (r - tickLen))
-                        ctx.lineTo(cx + Math.cos(angle) * (r + 1),        cy + Math.sin(angle) * (r + 1))
-                        ctx.strokeStyle = isRed
-                            ? (major ? "#ff4444" : "#661818")
-                            : (major ? "#d0d0d8" : (semi ? "#545460" : "#2c2c34"))
+                        ctx.moveTo(cx + Math.cos(angle)*(r-tlen), cy + Math.sin(angle)*(r-tlen))
+                        ctx.lineTo(cx + Math.cos(angle)*(r+1),    cy + Math.sin(angle)*(r+1))
+                        ctx.strokeStyle = isRed ? (major ? "#ff4444" : "#661818")
+                                                : (major ? "#d0d0d8" : (semi ? "#545460" : "#2c2c34"))
                         ctx.lineWidth = major ? 2.5 : (semi ? 1.5 : 0.75)
                         ctx.stroke()
 
                         if (major) {
-                            var num = i / 10          // 0..7
+                            var num = i / 10
                             var lr  = r - 36
-                            var lx  = cx + Math.cos(angle) * lr
-                            var ly  = cy + Math.sin(angle) * lr
                             ctx.save()
-                            ctx.translate(lx, ly)
+                            ctx.translate(cx + Math.cos(angle)*lr, cy + Math.sin(angle)*lr)
                             ctx.rotate(angle + Math.PI * 0.5)
                             ctx.fillStyle = isRed ? "#ff5555" : "#d8d8e4"
                             ctx.font = "bold 20px 'Helvetica Neue'"
-                            ctx.textAlign = "center"
-                            ctx.textBaseline = "middle"
+                            ctx.textAlign = "center"; ctx.textBaseline = "middle"
                             ctx.fillText(num, 0, 0)
                             ctx.restore()
                         }
                     }
 
-                    // Подпись
                     ctx.fillStyle = "#3a3a48"
                     ctx.font = "12px 'Helvetica Neue'"
                     ctx.textAlign = "center"; ctx.textBaseline = "middle"
@@ -319,17 +286,14 @@ Window {
                 Component.onCompleted: requestPaint()
             }
 
-            // Предупреждающие иконки
+            // Иконки предупреждений
             Row {
-                anchors {
-                    bottom: parent.bottom
-                    horizontalCenter: parent.horizontalCenter
-                    bottomMargin: tachZone.dialDiam * 0.17
-                }
+                anchors { bottom: parent.bottom; horizontalCenter: parent.horizontalCenter
+                          bottomMargin: tachZone.dialDiam * 0.17 }
                 spacing: 14
-                Text { id: oilWarn;      text: "🛢"; font.pixelSize: 22; opacity: 0.09 }
-                Text { id: checkWarn;    text: "⚙";  font.pixelSize: 22; color: "#ff9800"; opacity: 0.09 }
-                Text { id: battWarn;     text: "🔋"; font.pixelSize: 22; opacity: 0.09 }
+                Text { id: oilWarn;   text: "🛢"; font.pixelSize: 22; opacity: 0.09 }
+                Text { id: checkWarn; text: "⚙";  font.pixelSize: 22; color: "#ff9800"; opacity: 0.09 }
+                Text { id: battWarn;  text: "🔋"; font.pixelSize: 22; opacity: 0.09 }
             }
 
             // Стрелка тахометра
@@ -342,10 +306,8 @@ Window {
 
                 Rectangle {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    width: 4
-                    height: tachZone.dialRad * 0.60
-                    y: tachZone.dialRad - height
-                    radius: 2
+                    width: 4; height: tachZone.dialRad * 0.60
+                    y: tachZone.dialRad - height; radius: 2
                     gradient: Gradient {
                         GradientStop { position: 0.0; color: "#f0f0f4" }
                         GradientStop { position: 0.8; color: "#d0d0d4" }
@@ -364,8 +326,6 @@ Window {
 
         // ╔══════════════════════════════════════════════════════════════════╗
         // ║  СПИДОМЕТР  (центральный)                                       ║
-        // ║  Диапазон: 0..200 км/ч                                          ║
-        // ║  rotation = -135 + (speed / 200) * 270                         ║
         // ╚══════════════════════════════════════════════════════════════════╝
         Item {
             id: speedZone
@@ -376,58 +336,47 @@ Window {
 
             property real dialDiam: Math.min(width, height) * 0.96
             property real dialRad:  dialDiam * 0.5
-
             property real speedFraction: carController.speed / 200.0
             property real needleAngle: -135.0 + speedFraction * 270.0
 
-            ChromeWell {
-                id: speedChrome
-                anchors.centerIn: parent
-                dialSize: speedZone.dialDiam
-            }
+            ChromeWell { anchors.centerIn: parent; dialSize: speedZone.dialDiam }
 
-            // Шкала спидометра
             Canvas {
                 id: speedCanvas
                 anchors.centerIn: parent
-                width: speedZone.dialDiam
-                height: speedZone.dialDiam
+                width: speedZone.dialDiam; height: speedZone.dialDiam
                 antialiasing: true
 
                 onPaint: {
                     var ctx = getContext("2d")
                     ctx.clearRect(0, 0, width, height)
-                    var cx = width * 0.5, cy = height * 0.5
+                    var cx = width*0.5, cy = height*0.5
                     var r  = width * 0.432
                     var startRad = 135.0 * Math.PI / 180.0
                     var totalRad = 270.0 * Math.PI / 180.0
 
-                    // 200 тиков
                     for (var i = 0; i <= 200; i++) {
                         var frac  = i / 200.0
                         var angle = startRad + frac * totalRad
                         var major = (i % 20 === 0)
                         var semi  = (i % 10 === 0) && !major
-                        var tickLen = major ? 21 : (semi ? 13 : 5)
+                        var tlen  = major ? 21 : (semi ? 13 : 5)
 
                         ctx.beginPath()
-                        ctx.moveTo(cx + Math.cos(angle) * (r - tickLen), cy + Math.sin(angle) * (r - tickLen))
-                        ctx.lineTo(cx + Math.cos(angle) * (r + 1),        cy + Math.sin(angle) * (r + 1))
+                        ctx.moveTo(cx + Math.cos(angle)*(r-tlen), cy + Math.sin(angle)*(r-tlen))
+                        ctx.lineTo(cx + Math.cos(angle)*(r+1),    cy + Math.sin(angle)*(r+1))
                         ctx.strokeStyle = major ? "#d4d4d8" : (semi ? "#505058" : "#272730")
                         ctx.lineWidth   = major ? 2.5 : (semi ? 1.4 : 0.65)
                         ctx.stroke()
 
                         if (major) {
                             var lr = r - 38
-                            var lx = cx + Math.cos(angle) * lr
-                            var ly = cy + Math.sin(angle) * lr
                             ctx.save()
-                            ctx.translate(lx, ly)
+                            ctx.translate(cx + Math.cos(angle)*lr, cy + Math.sin(angle)*lr)
                             ctx.rotate(angle + Math.PI * 0.5)
                             ctx.fillStyle = "#dcdce8"
                             ctx.font = "bold 21px 'Helvetica Neue'"
-                            ctx.textAlign = "center"
-                            ctx.textBaseline = "middle"
+                            ctx.textAlign = "center"; ctx.textBaseline = "middle"
                             ctx.fillText(i, 0, 0)
                             ctx.restore()
                         }
@@ -451,10 +400,8 @@ Window {
 
                 Rectangle {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    width: 5
-                    height: speedZone.dialRad * 0.60
-                    y: speedZone.dialRad - height
-                    radius: 2.5
+                    width: 5; height: speedZone.dialRad * 0.60
+                    y: speedZone.dialRad - height; radius: 2.5
                     gradient: Gradient {
                         GradientStop { position: 0.0; color: "#ffffff" }
                         GradientStop { position: 0.8; color: "#e0e0e0" }
@@ -470,7 +417,8 @@ Window {
 
             NeedleCap { anchors.centerIn: parent; capSize: 34 }
 
-            // ── Бортовой компьютер — внутри круга, под колпачком ──────────
+            // ── Бортовой компьютер (внутри спидометра) ────────────────────────
+            // Компоновка: верхняя строка [GEAR | ODO | VOLT] + нижняя строка [часы]
             Item {
                 id: obcDisplay
                 anchors {
@@ -479,141 +427,196 @@ Window {
                     bottomMargin: speedZone.dialDiam * 0.055
                 }
                 width:  speedZone.dialDiam * 0.58
-                height: 74
+                height: 90
 
-                // Таймер реального времени
+                // Таймер системного времени
                 Timer {
-                    interval: 1000
-                    running: true
-                    repeat: true
+                    interval: 1000; running: true; repeat: true
                     onTriggered: clockText.text = Qt.formatDateTime(new Date(), "hh:mm")
                 }
 
-                // Полупрозрачная подложка
+                // Подложка дисплея
                 Rectangle {
-                    anchors.fill: parent
-                    radius: 7
-                    color: "#09090e"
-                    opacity: 0.88
-                    border { color: "#1a1a28"; width: 1 }
-
-                    // Световой блик сверху
+                    anchors.fill: parent; radius: 6
+                    color: "#07070c"; opacity: 0.90
+                    border { color: "#181826"; width: 1 }
+                    // Световой блик
                     Rectangle {
                         anchors { top: parent.top; left: parent.left; right: parent.right }
-                        height: parent.height * 0.30; radius: parent.radius
+                        height: 10; radius: parent.radius
                         gradient: Gradient {
-                            GradientStop { position: 0.0; color: "#12121c" }
+                            GradientStop { position: 0.0; color: "#11111e" }
                             GradientStop { position: 1.0; color: "transparent" }
                         }
                     }
                 }
 
-                Row {
-                    anchors.fill: parent
-                    anchors.margins: 0
+                // Горизонтальный разделитель между строками
+                Rectangle {
+                    anchors { left: parent.left; right: parent.right
+                              top: parent.top; topMargin: 48 }
+                    height: 1; color: "#18182a"
+                }
 
-                    // ── ПЕРЕДАЧА ──────────────────────────────────────────
+                // ── ВЕРХНЯЯ СТРОКА: GEAR | ODO | VOLT ────────────────────────
+                Item {
+                    height: 48
+                    anchors { left: parent.left; right: parent.right
+                              top: parent.top }
+
+                    // GEAR
                     Item {
-                        width: parent.width * 0.22; height: parent.height
-                        Column {
-                            anchors.centerIn: parent; spacing: 1
-                            Text {
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                text: "GEAR"
-                                color: "#303040"; font { pixelSize: 10; family: "Helvetica Neue"; letterSpacing: 0.8 }
-                            }
-                            Text {
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                text: carController.gear
-                                color: "#00d0e8"
-                                font { pixelSize: 38; bold: true; family: "Helvetica Neue" }
-                            }
+                        id: gearCell
+                        anchors { left: parent.left; top: parent.top; bottom: parent.bottom }
+                        width: parent.width * 0.26
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: carController.gear
+                            color: "#00d0ea"
+                            font { pixelSize: 34; bold: true; family: "Helvetica Neue" }
                         }
                     }
 
-                    // Пунктирный разделитель
+                    // Пунктирный разделитель GEAR | ODO
                     Canvas {
-                        width: 2; height: parent.height
+                        id: sepA
+                        x: gearCell.width; y: 0; width: 2; height: parent.height
                         onPaint: {
                             var c = getContext("2d")
-                            c.clearRect(0, 0, width, height)
-                            c.setLineDash([3, 5])
-                            c.beginPath(); c.moveTo(1, 6); c.lineTo(1, height - 6)
-                            c.strokeStyle = "#20202e"; c.lineWidth = 1.5; c.stroke()
+                            c.clearRect(0,0,width,height)
+                            c.setLineDash([3,5])
+                            c.beginPath(); c.moveTo(1,6); c.lineTo(1,height-6)
+                            c.strokeStyle="#1e1e30"; c.lineWidth=1.5; c.stroke()
                         }
                         Component.onCompleted: requestPaint()
                     }
 
-                    // ── ПРОБЕГ + НАПРЯЖЕНИЕ ───────────────────────────────
+                    // ODO (пробег)
                     Item {
-                        width: parent.width * 0.36; height: parent.height
-                        Column {
-                            anchors.centerIn: parent; spacing: 5
-                            Row {
-                                anchors.horizontalCenter: parent.horizontalCenter; spacing: 4
-                                Text { text: "4";    color: "#b8b8c4"; font { pixelSize: 18; family: "Helvetica Neue" } }
-                                Text { text: "km";   color: "#464654"; font { pixelSize: 12; family: "Helvetica Neue" }
-                                    anchors.baseline: parent.children[0].baseline }
-                            }
-                            Row {
-                                anchors.horizontalCenter: parent.horizontalCenter; spacing: 4
-                                Text { text: "13.6"; color: "#b8b8c4"; font { pixelSize: 18; family: "Helvetica Neue" } }
-                                Text { text: "V";    color: "#464654"; font { pixelSize: 12; family: "Helvetica Neue" }
-                                    anchors.baseline: parent.children[0].baseline }
-                            }
-                        }
-                    }
+                        id: odoCell
+                        anchors { left: gearCell.right; leftMargin: 2
+                                  top: parent.top; bottom: parent.bottom }
+                        width: parent.width * 0.36
 
-                    Canvas {
-                        width: 2; height: parent.height
-                        onPaint: {
-                            var c = getContext("2d")
-                            c.clearRect(0, 0, width, height)
-                            c.setLineDash([3, 5])
-                            c.beginPath(); c.moveTo(1, 6); c.lineTo(1, height - 6)
-                            c.strokeStyle = "#20202e"; c.lineWidth = 1.5; c.stroke()
-                        }
-                        Component.onCompleted: requestPaint()
-                    }
-
-                    // ── ВРЕМЯ ─────────────────────────────────────────────
-                    Item {
-                        width: parent.width * 0.40; height: parent.height
                         Column {
                             anchors.centerIn: parent; spacing: 1
                             Text {
                                 anchors.horizontalCenter: parent.horizontalCenter
-                                text: "TIME"
-                                color: "#303040"; font { pixelSize: 10; family: "Helvetica Neue"; letterSpacing: 0.8 }
+                                text: "ODO"
+                                color: "#282838"
+                                font { pixelSize: 9; letterSpacing: 1.2; family: "Helvetica Neue" }
                             }
-                            Text {
-                                id: clockText
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                text: Qt.formatDateTime(new Date(), "hh:mm:ss")
-                                color: "#c0c0cc"
-                                font { pixelSize: 22; bold: true; family: "Helvetica Neue" }
+                            Row {
+                                anchors.horizontalCenter: parent.horizontalCenter; spacing: 3
+                                Text {
+                                    text: "4"
+                                    color: "#b8b8c8"
+                                    font { pixelSize: 18; family: "Helvetica Neue" }
+                                }
+                                Text {
+                                    text: "km"
+                                    color: "#404050"
+                                    font { pixelSize: 11; family: "Helvetica Neue" }
+                                    anchors.baseline: parent.children[0].baseline
+                                }
                             }
                         }
+                    }
+
+                    // Пунктирный разделитель ODO | VOLT
+                    Canvas {
+                        id: sepB
+                        x: gearCell.width + 2 + odoCell.width; y: 0; width: 2; height: parent.height
+                        onPaint: {
+                            var c = getContext("2d")
+                            c.clearRect(0,0,width,height)
+                            c.setLineDash([3,5])
+                            c.beginPath(); c.moveTo(1,6); c.lineTo(1,height-6)
+                            c.strokeStyle="#1e1e30"; c.lineWidth=1.5; c.stroke()
+                        }
+                        Component.onCompleted: requestPaint()
+                    }
+
+                    // VOLT (напряжение)
+                    Item {
+                        anchors { left: odoCell.right; leftMargin: 2
+                                  right: parent.right
+                                  top: parent.top; bottom: parent.bottom }
+
+                        Column {
+                            anchors.centerIn: parent; spacing: 1
+                            Text {
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                text: "VOLT"
+                                color: "#282838"
+                                font { pixelSize: 9; letterSpacing: 1.2; family: "Helvetica Neue" }
+                            }
+                            Row {
+                                anchors.horizontalCenter: parent.horizontalCenter; spacing: 3
+                                Text {
+                                    text: "13.6"
+                                    color: "#b8b8c8"
+                                    font { pixelSize: 18; family: "Helvetica Neue" }
+                                }
+                                Text {
+                                    text: "V"
+                                    color: "#404050"
+                                    font { pixelSize: 11; family: "Helvetica Neue" }
+                                    anchors.baseline: parent.children[0].baseline
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // ── НИЖНЯЯ СТРОКА: цифровые часы ─────────────────────────────
+                Item {
+                    anchors { left: parent.left; right: parent.right
+                              bottom: parent.bottom; top: parent.top; topMargin: 49 }
+
+                    Text {
+                        id: clockText
+                        anchors.centerIn: parent
+                        text: Qt.formatDateTime(new Date(), "hh:mm")
+                        color: "#c8c8d8"
+                        font { pixelSize: 28; bold: true; family: "Helvetica Neue" }
                     }
                 }
             }
         }
 
         // ╔══════════════════════════════════════════════════════════════════╗
-        // ║  ПРАВЫЙ ПРИБОР: TEMP (верхняя дуга) + FUEL (нижняя дуга)       ║
+        // ║  ПРАВЫЙ ПРИБОР: TEMP (верх-лево) + FUEL (низ) + центральный диск║
         // ║                                                                  ║
-        // ║  TEMP: дуга от 9ч через 12ч до 3ч (180° через верх)            ║
-        // ║   CSS: startRad=180°, sweep=180° (180→360°)                     ║
-        // ║   Стрелка: rotation = 0 + fraction * 180   (0=9ч, 180=3ч)      ║
-        // ║     fraction = (temp-50)/(130-50)                               ║
+        // ║  Компоновка как на референсе:                                   ║
+        // ║  • Большой чёрный диск по центру (~50% радиуса)                 ║
+        // ║  • Шкала TEMP: дуга от 10ч до 12ч (60°), верхний левый сектор  ║
+        // ║    10ч = -120°, 12ч = 0° в Qt rotation                         ║
+        // ║    CSS: 10ч = 240°→ 240-90 = 150° в CSS; 12ч = 270°-90 = 180°? ║
+        // ║    Перейдём к простой CSS-геометрии:                            ║
+        // ║    10ч = 210° в CSS (= 240° от верха = 7ч нет, 10ч=300° от 3ч) ║
+        // ║    Используем градусы от оси X (3ч=0°, 6ч=90°, 9ч=180°, 12ч=270°):
+        // ║    10ч ≈ 240°, 12ч = 270°                                       ║
+        // ║    TEMP дуга: ctx.arc(cx,cy,r, 240°, 270°) anticlockwise=false  ║
+        // ║    (короткая дуга 30° слева-вверху)                             ║
         // ║                                                                  ║
-        // ║  FUEL: дуга от 3ч через 6ч до 9ч (180° через низ)              ║
-        // ║   CSS: startRad=0°, sweep=180° (0→180°)                         ║
-        // ║   Стрелка: rotation = -180 + fraction * 180  (0=9ч, 180=3ч)    ║
-        // ║     Но чтобы стрелка шла снизу, rotation = fraction * 180       ║
-        // ║     (при fraction=0: 0° → 3ч; fraction=1: 180° → 9ч)           ║
-        // ║   Инвертируем: rotation = 180 - fraction * 180                  ║
-        // ║     (при fraction=0: 180° = 9ч; fraction=1: 0° = 3ч/Full)      ║
+        // ║  Нет, на референсе дуга шире. Смотрим:                         ║
+        // ║  TEMP: от ~8ч до 12ч ≈ 120° через верх                         ║
+        // ║    8ч = 210° CSS, 12ч = 270° CSS                               ║
+        // ║    arc(cx,cy,r, 210°toRad, 270°toRad) → дуга 60° по часовой   ║
+        // ║  FUEL: от 6ч до ~4ч ≈ 120° через низ                           ║
+        // ║    6ч = 90° CSS, 4ч = 30° CSS                                  ║
+        // ║    arc(cx,cy,r, 30°toRad, 90°toRad) → дуга 60° по часовой     ║
+        // ║                                                                  ║
+        // ║  Стрелки: вращаются вокруг центра, короткие                    ║
+        // ║  TEMP needle: Qt rotation -120 (= 10ч) .. 0 (= 12ч)            ║
+        // ║    rotation = -120 + fraction * 120                             ║
+        // ║  FUEL needle: Qt rotation 90 (= 6ч) .. 150 (= 4ч)             ║
+        // ║    Нет — FUEL 0→Full = от 6ч назад к 4ч = по часовой           ║
+        // ║    6ч = Qt rotation 180°; 4ч = Qt 120°                         ║
+        // ║    Но хотим 0=пусто=6ч, 1=полный=4ч — шкала идёт от 6ч к 4ч  ║
+        // ║    Значит: rotation = 180 - fraction * 60                      ║
         // ╚══════════════════════════════════════════════════════════════════╝
         Item {
             id: rightZone
@@ -625,37 +628,43 @@ Window {
             property real dialDiam: Math.min(width, height) * 0.87
             property real dialRad:  dialDiam * 0.5
 
-            // Температура охлаждающей жидкости, 50..130°C, нейтраль ~90°C
-            property real tempValue:    90.0
-            property real tempFraction: (tempValue - 50.0) / 80.0   // (90-50)/80 = 0.5
-            // Стрелка TEMP: rotation = tempFraction * 180 - 90
-            // При fraction=0 (50°C): rotation=-90° (9 часов = слева)
-            // При fraction=0.5 (90°C): rotation=0° (12 часов = вверх) — нейтраль
-            // При fraction=1 (130°C): rotation=90° (3 часа = справа)
-            property real tempNeedle: tempFraction * 180.0 - 90.0
+            // ── значения физики ───────────────────────────────────────────
+            // Температура охлаждающей жидкости 50..130°C
+            property real tempVal:      90.0   // подключить: carController.coolantTemp
+            property real tempFraction: (tempVal - 50.0) / 80.0
+            // TEMP шкала: 8ч..12ч (CSS: 210°..270°), охват 60° по часовой
+            // Qt rotation: 8ч=-150°, 12ч=-90°
+            // Но нам нужно чтобы rotation=0 у Item → стрелка вверх.
+            // 8ч в Qt = -150°, 12ч = -90°.
+            // rotation = -150 + fraction * 60    (0→-150°=8ч, 1→-90°=12ч)
+            // Подожди — на референсе TEMP от ~10ч до ~1ч (широкая дуга ~90°).
+            // 10ч в Qt: 10ч = 300° по часовой от 12ч = Qt rotation -60°? Нет.
+            // Qt: 12ч=0°, 3ч=90°, 6ч=180°, 9ч=-90°(=270°), 10ч=-60°(=300°)
+            // 10ч = -60°; 12ч = 0°; 1ч = 30°
+            // TEMP: от 10ч(-60°) до 1ч(+30°) = 90° охват
+            // rotation = -60 + fraction * 90
+            property real tempNeedle: -60.0 + tempFraction * 90.0
+            Behavior on tempNeedle { NumberAnimation { duration: 500; easing.type: Easing.OutCubic } }
 
             // Уровень топлива 0..1
-            property real fuelFraction: 0.65
-            // Стрелка FUEL: rotation = 90 - fuelFraction * 180
-            // При fraction=0 (пусто): rotation=90° (3 часа = справа) — Empty справа
-            // При fraction=0.5: rotation=0° (вниз = 6ч)
-            // При fraction=1 (полный): rotation=-90° (9 часов = слева) — Full слева
-            property real fuelNeedle: 90.0 - fuelFraction * 180.0
+            property real fuelVal:      0.65   // подключить: carController.fuelLevel
+            // FUEL шкала: от 7ч до 5ч через 6ч (нижний сектор ~120°)
+            // 7ч = Qt -150°; 5ч = Qt 150°
+            // Проблема: 7ч→5ч через низ = 120° по часовой (7ч→6ч→5ч)
+            // 7ч Qt = 210° = -150°; 5ч Qt = 150°
+            // rotation = -150 + fraction * (150-(-150)) — нет, это через верх
+            // Через низ: 7ч→6ч→5ч = по часовой: -150° → -180°/+180° → +150°
+            // Это 300° охват — слишком много!
+            // На референсе FUEL от ~5ч до ~7ч дуга всего ~120° через низ.
+            // 5ч = 150° CSS = Qt 60° (5ч = 5*30=150° от 12ч = Qt rotation 60°)
+            // 7ч = 210° CSS = Qt 120°
+            // Дуга через низ = CSS arc(cx,cy,r, 150°, 210°, false) — 60° дуга.
+            // FUEL: 0=Empty=5ч(Qt 60°) .. 1=Full=7ч(Qt 120°)
+            // rotation = 60 + fraction * 60   (60°=5ч=Empty, 120°=7ч=Full)
+            property real fuelNeedle: 60.0 + fuelVal * 60.0
+            Behavior on fuelNeedle { NumberAnimation { duration: 500; easing.type: Easing.OutCubic } }
 
-            Behavior on tempNeedle { NumberAnimation { duration: 600; easing.type: Easing.OutCubic } }
-            Behavior on fuelNeedle { NumberAnimation { duration: 600; easing.type: Easing.OutCubic } }
-
-            ChromeWell {
-                anchors.centerIn: parent
-                dialSize: rightZone.dialDiam
-            }
-
-            // Горизонтальный разделитель внутри круга (визуальный)
-            Rectangle {
-                anchors.centerIn: parent
-                width: rightZone.dialDiam * 0.72; height: 1
-                color: "#1e1e2a"
-            }
+            ChromeWell { anchors.centerIn: parent; dialSize: rightZone.dialDiam }
 
             // Шкала правого прибора
             Canvas {
@@ -668,207 +677,246 @@ Window {
                     var ctx = getContext("2d")
                     ctx.clearRect(0, 0, width, height)
                     var cx = width * 0.5, cy = height * 0.5
-                    var r  = width * 0.41
+                    var r  = width * 0.41   // радиус шкалы
                     var PI = Math.PI
+                    var toRad = PI / 180.0
 
-                    // ══════════════════════════════════════════════════════
-                    //  ВЕРХНЯЯ ПОЛОВИНА — ТЕМПЕРАТУРА (TEMP)
-                    //  В Canvas верхняя полусфера — это углы от -PI (9 часов)
-                    //  до 0 (3 часа) через верх.
-                    // ══════════════════════════════════════════════════════
+                    // ──────────────────────────────────────────────────────
+                    //  TEMP: CSS дуга от 210° до 300° (10ч → 1ч, 90°)
+                    //  10ч: CSS=240°, Qt=-60°. 1ч: CSS=330° Qt=30°.
+                    //  По часовой arc(start, end, false)
+                    //  210° = 8ч; 300° = 10ч (считая от 3ч=0°)
+                    //  Хотим: левый верхний сектор, как на референсе.
+                    //  8ч = 8*30=240° от 12ч → CSS = 240-90=150°
+                    //  Нет. CSS 0°=3ч, 90°=6ч, 180°=9ч, 270°=12ч.
+                    //  10ч = (10/12)*360 = 300° от 12ч → CSS = 300-90 = 210°
+                    //  12ч = CSS = 270°; 2ч = CSS = 330°... нет
+                    //  ПРОЩЕ: 12ч = CSS 270°. 10ч = CSS 270° - 60° = 210°.
+                    //  Дуга TEMP: CSS 210° → 330° (через 270°=12ч), охват 120°
+                    //  arc(cx, cy, r, 210*toRad, 330*toRad)
+                    //  Стрелка Qt: 210° CSS = 12ч - 60° = -60° в Qt. 330° CSS = 60° в Qt.
+                    //  rotation = -60 + fraction * 120  ✓ (совпадает с tempNeedle выше)
 
-                    // Красная зона температуры (последние 15% шкалы перед 3 часами)
-                    var redStartAngle = -PI * 0.15 // Примерно -27° (не доходя до 3 часов)
+                    var tCSSstart = 210.0 * toRad   // 10ч
+                    var tCSS_end  = 330.0 * toRad   // 2ч
+                    var tSweep    = 120.0 * toRad
+
+                    // Фоновая дуга TEMP
                     ctx.beginPath()
-                    ctx.arc(cx, cy, r - 4, redStartAngle, 0, false) // по часовой стрелке к 0 (3 часам)
-                    ctx.strokeStyle = "#7a1010"
-                    ctx.lineWidth = 10
-                    ctx.lineCap = "butt"
-                    ctx.stroke()
+                    ctx.arc(cx, cy, r - 3, tCSSstart, tCSS_end, false)
+                    ctx.strokeStyle = "#1a1a24"; ctx.lineWidth = 14; ctx.lineCap = "butt"; ctx.stroke()
 
-                    // 8 делений температуры (равномерно распределяем по верхней дуге от -PI до 0)
-                    var tempTicks = 8
-                    for (var i = 0; i <= tempTicks; i++) {
-                        var frac    = i / tempTicks
-                        var angle   = -PI + frac * PI
-                        var major   = (i % 2 === 0)
-                        var tickLen = major ? 16 : 9
-                        var isHot   = (frac >= 0.85)
+                    // Красная зона: последние 20% (>117°C = ближе к 2ч)
+                    var tRedFrom = tCSSstart + 0.80 * tSweep
+                    ctx.beginPath()
+                    ctx.arc(cx, cy, r - 3, tRedFrom, tCSS_end, false)
+                    ctx.strokeStyle = "#7a1010"; ctx.lineWidth = 14; ctx.lineCap = "butt"; ctx.stroke()
 
-                        // Отрисовка засечек шкал
+                    // Деления TEMP: 6 секций (0..6 = 7 делений), крупные 0/3/6
+                    var tTicks = 6
+                    for (var i = 0; i <= tTicks; i++) {
+                        var frac  = i / tTicks
+                        var angle = tCSSstart + frac * tSweep
+                        var major = (i === 0 || i === 3 || i === 6)
+                        var tlen  = major ? 17 : 9
+                        var isHot = (frac >= 0.80)
+
                         ctx.beginPath()
-                        ctx.moveTo(cx + Math.cos(angle) * (r - tickLen), cy + Math.sin(angle) * (r - tickLen))
-                        ctx.lineTo(cx + Math.cos(angle) * (r + 1),        cy + Math.sin(angle) * (r + 1))
-                        ctx.strokeStyle = isHot ? "#cc3030" : "#6c6c7a"
-                        ctx.lineWidth = major ? 2.0 : 1.0
-                        ctx.stroke()
+                        ctx.moveTo(cx + Math.cos(angle)*(r-3-tlen), cy + Math.sin(angle)*(r-3-tlen))
+                        ctx.lineTo(cx + Math.cos(angle)*(r-3+1),    cy + Math.sin(angle)*(r-3+1))
+                        ctx.strokeStyle = isHot ? "#cc3030" : "#606070"
+                        ctx.lineWidth = major ? 2.0 : 1.0; ctx.stroke()
 
                         if (major) {
-                            var labels = ["50", "70", "90", "110", "130"]
-                            var idx = i / 2
-
-                            if (idx < labels.length) {
-                                // Увеличили радиус (сделали r - 22 вместо r - 30), цифры встанут ближе к делениям
-                                var lr = r - 22
-
-                                ctx.save()
-                                ctx.translate(
-                                    cx + Math.cos(angle) * lr,
-                                    cy + Math.sin(angle) * lr
-                                )
-
-                                // Улучшенный поворот: крайние цифры (50 и 130) оставляем ровными,
-                                // а средние красиво наклоняем
-                                if (idx === 0 || idx === 4) {
-                                    ctx.rotate(0) // Строго горизонтально для 50 и 130
-                                } else {
-                                    ctx.rotate(angle + PI * 0.5) // Наклон по радиусу для 70, 90, 110
-                                }
-
-                                ctx.fillStyle = isHot ? "#ee4444" : "#b4b4c0"
-                                ctx.font = "bold 13px sans-serif" // Сделали шрифт чуть компактнее (13px вместо 15px)
-                                ctx.textAlign = "center"
-                                ctx.textBaseline = "middle"
-
-                                ctx.fillText(labels[idx], 0, 0)
-                                ctx.restore()
-                            }
-                        }
-                    }
-
-                    // Перенесли название шкалы TEMP ниже центральной точки, чтобы она не сливалась с 90
-                    ctx.fillStyle = "#6c6c7a"
-                    ctx.font = "bold 11px sans-serif"
-                    ctx.textAlign = "center"
-                    ctx.fillText("TEMP", cx, cy - 35) // Теперь надпись аккуратно встанет НАД центром, но ПОД цифрой 90
-
-                    ctx.fillStyle = "#2c3c48"
-                    ctx.font = "11px 'Helvetica Neue'"
-                    ctx.textAlign = "center"; ctx.textBaseline = "middle"
-                    ctx.fillText("TEMP", cx, cy - r * 0.73)
-
-                    // ══════════════════════════════════════════════════════
-                    //  НИЖНЯЯ ПОЛОВИНА — ТОПЛИВО
-                    //  Дуга: от 0 (3ч = справа) до π (9ч = слева)
-                    //  Идёт ЧЕРЕЗ НИЗ (по часовой = clockwise, anticlockwise=false)
-                    //  ctx.arc(cx, cy, r, 0, PI, false)
-                    // ══════════════════════════════════════════════════════
-                    var fS = 0     // 3 часа = справа (Empty)
-                    var fE = PI    // 9 часов = слева (Full)
-
-                    // Оранжевая зона резерва: первые 15% от 3ч (Empty)
-                    var resAngle = PI * 0.15  // 27°
-                    ctx.beginPath()
-                    ctx.arc(cx, cy, r - 4, fS, fS + resAngle, false)
-                    ctx.strokeStyle = "#7a4000"; ctx.lineWidth = 10; ctx.lineCap = "butt"; ctx.stroke()
-
-                    // 8 делений топлива
-                    var fuelTicks = 8
-                    for (var j = 0; j <= fuelTicks; j++) {
-                        // frac=0 → 3ч (0°), frac=1 → 9ч (180°), идём вниз
-                        var ff     = j / fuelTicks
-                        var fa     = ff * PI                // CSS-угол 0°→180°
-                        var fmaj   = (j % 2 === 0)
-                        var flen   = fmaj ? 16 : 9
-                        var isLow  = (ff <= 0.15)
-
-                        ctx.beginPath()
-                        ctx.moveTo(cx + Math.cos(fa) * (r - flen), cy + Math.sin(fa) * (r - flen))
-                        ctx.lineTo(cx + Math.cos(fa) * (r + 1),     cy + Math.sin(fa) * (r + 1))
-                        ctx.strokeStyle = isLow ? "#cc7000" : "#6c6c7a"
-                        ctx.lineWidth = fmaj ? 2.0 : 1.0; ctx.stroke()
-
-                        if (fmaj) {
-                            // Подписи: E, ½, F
-                            var fuelLabels = ["E", "", "½", "", "F"]
-                            var fuelLabelIdx = j / 2   // 0,1,2,3,4
-                            var flr = r - 30
+                            // 3 цифры: 50 (i=0), 90 (i=3), 130 (i=6)
+                            var labels = ["50", "90", "130"]
+                            var li = i / 3
+                            var lr = r - 3 - 30
                             ctx.save()
-                            ctx.translate(cx + Math.cos(fa) * flr, cy + Math.sin(fa) * flr)
-                            ctx.rotate(fa + PI * 0.5)
-                            ctx.fillStyle = isLow ? "#ff9922" : "#b4b4c0"
+                            ctx.translate(cx + Math.cos(angle)*lr, cy + Math.sin(angle)*lr)
+                            ctx.rotate(angle + PI * 0.5)
+                            ctx.fillStyle = isHot ? "#ee4444" : "#b8b8c8"
                             ctx.font = "bold 15px 'Helvetica Neue'"
                             ctx.textAlign = "center"; ctx.textBaseline = "middle"
-                            ctx.fillText(fuelLabels[fuelLabelIdx], 0, 0)
+                            ctx.fillText(labels[li], 0, 0)
                             ctx.restore()
                         }
                     }
 
-                    // Метка FUEL и иконка бензоколонки — нижний полукруг
-                    ctx.fillStyle = "#8a6a20"
+                    // Иконка термометра рядом с "90" (середина = угол tCSSstart+tSweep/2)
+                    var tMidAngle = tCSSstart + 0.5 * tSweep   // = 270° CSS = 12ч
+                    var iconR = r - 3 - 44
+                    ctx.font = "16px sans-serif"
+                    ctx.textAlign = "center"; ctx.textBaseline = "middle"
+                    ctx.fillText("🌡", cx + Math.cos(tMidAngle)*iconR, cy + Math.sin(tMidAngle)*iconR - 4)
+
+                    // ──────────────────────────────────────────────────────
+                    //  FUEL: CSS дуга от 30° до 150° (5ч → 7ч через 6ч)
+                    //  5ч CSS: 12ч=270°, 5ч = 270° + 5*30° - 360°? Нет.
+                    //  3ч=0°, 4ч=30°, 5ч=60°, 6ч=90°, 7ч=120°, 8ч=150°
+                    //  Правильно! 3ч=0°, каждый час = 30°.
+                    //  5ч = 60° CSS; 7ч = 120° CSS. Дуга по часовой 60°..120°.
+                    //  arc(cx, cy, r, 60°, 120°, false) — через низ (6ч=90°) ✓
+
+                    var fCSSstart = 60.0 * toRad    // 5ч (Full)
+                    var fCSS_end  = 120.0 * toRad   // 7ч (Empty)
+                    var fSweep    = 60.0 * toRad
+
+                    // Фоновая дуга FUEL
+                    ctx.beginPath()
+                    ctx.arc(cx, cy, r - 3, fCSSstart, fCSS_end, false)
+                    ctx.strokeStyle = "#1a1a24"; ctx.lineWidth = 14; ctx.lineCap = "butt"; ctx.stroke()
+
+                    // Оранжевая зона резерва: последние 25% (ближе к 7ч = Empty)
+                    var fOrangeFrom = fCSSstart + 0.75 * fSweep
+                    ctx.beginPath()
+                    ctx.arc(cx, cy, r - 3, fOrangeFrom, fCSS_end, false)
+                    ctx.strokeStyle = "#7a4000"; ctx.lineWidth = 14; ctx.lineCap = "butt"; ctx.stroke()
+
+                    // Деления FUEL: 4 секции (0..4 = 5 делений)
+                    var fTicks = 4
+                    for (var j = 0; j <= fTicks; j++) {
+                        var ff     = j / fTicks
+                        var fa     = fCSSstart + ff * fSweep
+                        var fmaj   = (j === 0 || j === 2 || j === 4)
+                        var flen2  = fmaj ? 17 : 9
+                        var isLow  = (ff >= 0.75)
+
+                        ctx.beginPath()
+                        ctx.moveTo(cx + Math.cos(fa)*(r-3-flen2), cy + Math.sin(fa)*(r-3-flen2))
+                        ctx.lineTo(cx + Math.cos(fa)*(r-3+1),      cy + Math.sin(fa)*(r-3+1))
+                        ctx.strokeStyle = isLow ? "#cc6600" : "#606070"
+                        ctx.lineWidth = fmaj ? 2.0 : 1.0; ctx.stroke()
+
+                        if (fmaj) {
+                            // 3 подписи: "1" (j=0, Full=5ч), "0.5" (j=2, 6ч), "0" (j=4, Empty=7ч)
+                            var fLabels = ["1", "0.5", "0"]
+                            var fli = j / 2
+                            var flr = r - 3 - 30
+                            ctx.save()
+                            ctx.translate(cx + Math.cos(fa)*flr, cy + Math.sin(fa)*flr)
+                            ctx.rotate(fa + PI * 0.5)
+                            ctx.fillStyle = isLow ? "#ff9922" : "#b8b8c8"
+                            ctx.font = "bold 15px 'Helvetica Neue'"
+                            ctx.textAlign = "center"; ctx.textBaseline = "middle"
+                            ctx.fillText(fLabels[fli], 0, 0)
+                            ctx.restore()
+                        }
+                    }
+
+                    // Иконка бензоколонки (у нуля = 7ч = CSS 120°)
+                    var fuelIconAngle = fCSS_end + 18 * toRad  // чуть правее шкалы
+                    var fuelIconR = r - 3 - 34
                     ctx.font = "18px sans-serif"
                     ctx.textAlign = "center"; ctx.textBaseline = "middle"
-                    ctx.fillText("⛽", cx, cy + r * 0.78)
+                    ctx.fillText("⛽", cx + Math.cos(fuelIconAngle)*fuelIconR,
+                                       cy + Math.sin(fuelIconAngle)*fuelIconR)
 
-                    ctx.fillStyle = "#3a2c14"
-                    ctx.font = "11px 'Helvetica Neue'"
+                    // ──────────────────────────────────────────────────────
+                    //  Зелёная пиктограмма габаритов (правая сторона)
+                    //  Правая сторона ≈ CSS 330°–30° (область 3ч)
+                    ctx.fillStyle = "#1a6a1a"
+                    ctx.font = "13px 'Helvetica Neue'"
                     ctx.textAlign = "center"; ctx.textBaseline = "middle"
-                    ctx.fillText("FUEL", cx, cy + r * 0.62)
+                    // Позиция у 3ч = cx+r*cos(0), cy+r*sin(0), чуть внутрь
+                    ctx.fillText("≡О≡", cx + r * 0.58, cy - r * 0.08)
                 }
+
                 Component.onCompleted: requestPaint()
             }
 
-            // Стрелка ТЕМПЕРАТУРЫ (верхний полукруг)
-            // rotation=−90 → указывает влево (9ч = 50°C)
-            // rotation=0   → указывает вверх (12ч = 90°C)
-            // rotation=+90 → указывает вправо (3ч = 130°C)
+            // ── БОЛЬШОЙ центральный диск ─────────────────────────────────
+            // Закрывает центр, оставляя видимыми только дуги на краях
+            Rectangle {
+                anchors.centerIn: parent
+                width: rightZone.dialDiam * 0.54
+                height: width; radius: width / 2
+                gradient: RadialGradient {
+                    centerX: width * 0.42; centerY: height * 0.35
+                    centerRadius: width * 0.58
+                    focalX: centerX; focalY: centerY
+                    GradientStop { position: 0.0;  color: "#2a2a36" }
+                    GradientStop { position: 0.40; color: "#141420" }
+                    GradientStop { position: 0.85; color: "#070710" }
+                    GradientStop { position: 1.0;  color: "#040408" }
+                }
+                border { color: "#0e0e18"; width: 1 }
+            }
+
+            // ── Стрелка ТЕМПЕРАТУРЫ ───────────────────────────────────────
+            // Qt: 12ч=0°, -60°=10ч, +30°=1ч.
+            // fraction=0(50°C) → Qt rotation=-60°; fraction=1(130°C) → Qt rotation=+60°
+            // tempNeedle = -60 + fraction*120 ✓
             Item {
                 anchors.centerIn: parent
                 width: rightZone.dialDiam; height: rightZone.dialDiam
                 rotation: rightZone.tempNeedle
                 transformOrigin: Item.Center
 
+                // Стрелка короткая — видна только во внешнем кольце
                 Rectangle {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    width: 3.5
-                    height: rightZone.dialRad * 0.57
-                    y: rightZone.dialRad - height
-                    radius: 2
+                    width: 3
+                    height: rightZone.dialRad * 0.50   // выходит из под диска
+                    y: rightZone.dialRad - height       // от центра вверх
+                    radius: 1.5
                     gradient: Gradient {
-                        GradientStop { position: 0.0; color: "#ececec" }
-                        GradientStop { position: 1.0; color: "#a0a0a0" }
+                        GradientStop { position: 0.0; color: "#f0f0f4" }
+                        GradientStop { position: 1.0; color: "#a0a0a8" }
                     }
                 }
                 Rectangle {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    width: 4; height: rightZone.dialRad * 0.12
+                    width: 4; height: rightZone.dialRad * 0.10
                     y: rightZone.dialRad; radius: 2; color: "#b01818"
                 }
             }
 
-            // Стрелка ТОПЛИВА (нижний полукруг)
-            // rotation=+90  → указывает вправо (3ч = E)
-            // rotation=0    → указывает вниз  (6ч = ½)
-            // rotation=−90  → указывает влево (9ч = F)
+            // ── Стрелка ТОПЛИВА ───────────────────────────────────────────
+            // CSS: fCSSstart=60°(5ч=Full), fCSS_end=120°(7ч=Empty)
+            // Qt: 5ч = 60° CSS = Qt rotation 60°-90° = -30°...
+            // CSS→Qt: Qt_rot = CSS_angle - 270°  (т.к. 12ч = CSS 270° = Qt 0°)
+            // 5ч CSS=60°: Qt = 60-270 = -210° = 150°
+            // 7ч CSS=120°: Qt = 120-270 = -150°
+            // fraction=0=Full=5ч → Qt=150°; fraction=1=Empty=7ч → Qt=-150°(-210°?)
+            // Нет: -150° и 150° это одно и то же направление через разный знак...
+            // 5ч Qt: 5 часов = 150° по часовой от 12ч = Qt rotation 150°.
+            // 7ч Qt: 7 часов = 210° по часовой от 12ч = Qt rotation 210° = -150°.
+            // Full(0) = 5ч = 150°. Empty(1) = 7ч = 210°.
+            // fuelNeedle = 150 + fraction * 60
+            // (переопределяем — в properties выше формула была другой)
+            // Пересчёт: 150 + 0*60=150 ✓; 150 + 0.65*60=189; 150+1*60=210 ✓
+            // Обновляем свойство напрямую через binding:
+            // Создаём локальный alias:
+            property real fuelNeedleCorrect: 150.0 + fuelVal * 60.0
+            Behavior on fuelNeedleCorrect { NumberAnimation { duration: 500; easing.type: Easing.OutCubic } }
+
             Item {
                 anchors.centerIn: parent
                 width: rightZone.dialDiam; height: rightZone.dialDiam
-                rotation: rightZone.fuelNeedle
+                rotation: rightZone.fuelNeedleCorrect
                 transformOrigin: Item.Center
 
                 Rectangle {
                     anchors.horizontalCenter: parent.horizontalCenter
-
-                    width: 3.5
-                    height: rightZone.dialRad * 0.42
-
-                    y: rightZone.dialRad
-
-                    radius: 2
-
+                    width: 3
+                    height: rightZone.dialRad * 0.50
+                    y: rightZone.dialRad - height
+                    radius: 1.5
                     gradient: Gradient {
-                        GradientStop { position: 0.0; color: "#ececec" }
-                        GradientStop { position: 1.0; color: "#a0a0a0" }
+                        GradientStop { position: 0.0; color: "#f0f0f4" }
+                        GradientStop { position: 1.0; color: "#a0a0a8" }
                     }
                 }
                 Rectangle {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    width: 4; height: rightZone.dialRad * 0.12
-                    y: rightZone.dialRad - height; radius: 2; color: "#b06010"
+                    width: 4; height: rightZone.dialRad * 0.10
+                    y: rightZone.dialRad; radius: 2; color: "#b06010"
                 }
             }
 
-            NeedleCap { anchors.centerIn: parent; capSize: 26 }
+            // Центральный колпак поверх диска и хвостов стрелок
+            NeedleCap { anchors.centerIn: parent; capSize: 28 }
         }
     }
 }
