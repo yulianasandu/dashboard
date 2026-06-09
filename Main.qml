@@ -1,5 +1,10 @@
 import QtQuick 2.15
 import QtQuick.Window 2.15
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Window
+
+import Automotive.Core 1.0
 
 Window {
     id: root
@@ -8,6 +13,10 @@ Window {
     visible: true
     title: "Lada Vesta Dashboard"
     color: "#0d0d0f"
+
+    CarController {
+        id: carController
+    }
 
     // ── Захват фокуса сразу при запуске ─────────────────────────────────────
     Component.onCompleted: keyHandler.forceActiveFocus()
@@ -26,19 +35,41 @@ Window {
 
         Keys.onPressed: function(event) {
             if (event.isAutoRepeat) return
+
             switch (event.key) {
-                case Qt.Key_W: carController.setThrottle(true);      break
-                case Qt.Key_S: carController.setBrake(true);         break
-                case Qt.Key_A: carController.toggleLeftBlinker();    break
-                case Qt.Key_D: carController.toggleRightBlinker();   break
-                case Qt.Key_F: carController.toggleHazard();         break
+            case Qt.Key_W:
+                carController.setThrottle(true)
+                break
+
+            case Qt.Key_S:
+                carController.setBrake(true)
+                break
+
+            case Qt.Key_A:
+                carController.toggleLeftBlinker()
+                break
+
+            case Qt.Key_D:
+                carController.toggleRightBlinker()
+                break
+
+            case Qt.Key_F:
+                carController.toggleHazard()
+                break
             }
         }
+
         Keys.onReleased: function(event) {
             if (event.isAutoRepeat) return
+
             switch (event.key) {
-                case Qt.Key_W: carController.setThrottle(false); break
-                case Qt.Key_S: carController.setBrake(false);    break
+            case Qt.Key_W:
+                carController.setThrottle(false)
+                break
+
+            case Qt.Key_S:
+                carController.setBrake(false)
+                break
             }
         }
     }
@@ -55,10 +86,10 @@ Window {
             anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 60 }
             spacing: -4
             Repeater {
-                model: 3
+                model: 2
                 Text {
                     text: "◀"
-                    font.pixelSize: 28 - index * 4
+                    font.pixelSize: 28 - index
                     color: "#00e676"
                     opacity: carController.leftBlinkerOn ? (1.0 - index * 0.25) : 0.05
                     Behavior on opacity { NumberAnimation { duration: 60 } }
@@ -67,14 +98,18 @@ Window {
         }
 
         Text {
-            anchors.centerIn: parent
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: 6
             text: "W — газ    S — тормоз    A — ◀    D — ▶    F — аварийка"
             color: "#383838"
             font { pixelSize: 15; family: "Helvetica Neue, Helvetica" }
         }
 
         Text {
-            anchors.centerIn: parent
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.top: parent.top
+            anchors.topMargin: 6
             text: "⚠  АВАРИЙНАЯ"
             color: "#ff6d00"
             font { pixelSize: 17; bold: true; family: "Helvetica Neue" }
@@ -87,10 +122,10 @@ Window {
             anchors { right: parent.right; verticalCenter: parent.verticalCenter; rightMargin: 60 }
             spacing: -4
             Repeater {
-                model: 3
+                model: 2
                 Text {
                     text: "▶"
-                    font.pixelSize: 20 + index * 4
+                    font.pixelSize: 28 + index
                     color: "#00e676"
                     opacity: carController.rightBlinkerOn ? (0.5 + index * 0.25) : 0.05
                     Behavior on opacity { NumberAnimation { duration: 60 } }
@@ -194,9 +229,9 @@ Window {
                     ctx.strokeStyle = "#ef5350"; ctx.lineWidth = 2; ctx.stroke()
                     ctx.restore()
 
-                    ctx.beginPath(); ctx.arc(cx, cy, 12, 0, Math.PI * 2)
+                    ctx.beginPath(); ctx.arc(cx, cy, 8, 0, Math.PI * 2)
                     ctx.fillStyle = "#0d0d0f"; ctx.fill()
-                    ctx.beginPath(); ctx.arc(cx, cy, 6, 0, Math.PI * 2)
+                    ctx.beginPath(); ctx.arc(cx, cy, 3, 0, Math.PI * 2)
                     ctx.fillStyle = "#555"; ctx.fill()
                 }
             }
@@ -279,9 +314,9 @@ Window {
                     ctx.strokeStyle = "#ef5350"; ctx.lineWidth = 2.5; ctx.stroke()
                     ctx.restore()
 
-                    ctx.beginPath(); ctx.arc(cx, cy, 18, 0, Math.PI * 2); ctx.fillStyle = "#0d0d0f"; ctx.fill()
-                    ctx.beginPath(); ctx.arc(cx, cy, 10, 0, Math.PI * 2); ctx.fillStyle = "#333"; ctx.fill()
-                    ctx.beginPath(); ctx.arc(cx, cy, 4, 0, Math.PI * 2); ctx.fillStyle = "#aaa"; ctx.fill()
+                    ctx.beginPath(); ctx.arc(cx, cy, 8, 0, Math.PI * 2); ctx.fillStyle = "#0d0d0f"; ctx.fill()
+                    ctx.beginPath(); ctx.arc(cx, cy, 3, 0, Math.PI * 2); ctx.fillStyle = "#333"; ctx.fill()
+
                 }
             }
 
@@ -312,11 +347,11 @@ Window {
                         spacing: 6; anchors.verticalCenter: parent.verticalCenter
                         Row {
                             spacing: 8
-                            Text { text: "13.6°"; color: "#aaaaaa"; font { pixelSize: 18; family: "Helvetica Neue" } }
+                            Text { width: 100; horizontalAlignment: Text.AlignHCenter; text: "13.6"; color: "#aaaaaa"; font { pixelSize: 18; family: "Helvetica Neue" } }
                         }
                         Row {
                             spacing: 8
-                            Text { text: "02:54"; color: "#aaaaaa"; font { pixelSize: 18; bold: true; family: "Helvetica Neue" } }
+                            Text { width: 100; horizontalAlignment: Text.AlignHCenter; text: "02:54"; color: "#aaaaaa"; font { pixelSize: 18; bold: true; family: "Helvetica Neue" } }
                         }
                     }
 
@@ -434,8 +469,8 @@ Window {
                     ctx.restore()
 
                     // Центральный болт
-                    ctx.beginPath(); ctx.arc(cx, cy, 12, 0, Math.PI * 2); ctx.fillStyle = "#0d0d0f"; ctx.fill()
-                    ctx.beginPath(); ctx.arc(cx, cy, 6, 0, Math.PI * 2); ctx.fillStyle = "#333"; ctx.fill()
+                    ctx.beginPath(); ctx.arc(cx, cy, 8, 0, Math.PI * 2); ctx.fillStyle = "#0d0d0f"; ctx.fill()
+                    ctx.beginPath(); ctx.arc(cx, cy, 3, 0, Math.PI * 2); ctx.fillStyle = "#333"; ctx.fill()
 
                     // Текстовые иконки
                     ctx.fillStyle = "#90caf9"; ctx.font = "20px 'Helvetica Neue'"
