@@ -57,37 +57,64 @@ Window {
     }
 
     // ── клавиши ─────────────────────────────────────────────────────────────
+    // Восстанавливаем фокус при возврате в окно после другого приложения
+    onActiveChanged: {
+        console.log("WINDOW active =", active)
+
+        if (active) keyScope.forceActiveFocus()
+    }
+
+
     FocusScope {
         id: keyScope
         anchors.fill: parent
         focus: true
 
-        MouseArea {
-            anchors.fill: parent
-            onClicked: keyScope.forceActiveFocus()
-            propagateComposedEvents: true
+        Keys.onPressed: function(event) {
+            if (event.isAutoRepeat)
+                return
+
+            const key = event.text.toLowerCase()
+
+            if ("wц".includes(key))
+                carController.setThrottle(true)
+
+            else if ("sы".includes(key))
+                carController.setBrake(true)
+
+            else if ("aф".includes(key))
+                carController.toggleLeftBlinker()
+
+            else if ("dв".includes(key))
+                carController.toggleRightBlinker()
+
+            else if ("fа".includes(key))
+                carController.toggleHazard()
         }
 
-        Keys.onPressed: function(event) {
-            if (event.isAutoRepeat) return
-            switch (event.key) {
-                case Qt.Key_W: carController.setThrottle(true);    break
-                case Qt.Key_S: carController.setBrake(true);       break
-                case Qt.Key_A: carController.toggleLeftBlinker();  break
-                case Qt.Key_D: carController.toggleRightBlinker(); break
-                case Qt.Key_F: carController.toggleHazard();       break
-            }
-        }
         Keys.onReleased: function(event) {
-            if (event.isAutoRepeat) return
-            switch (event.key) {
-                case Qt.Key_W: carController.setThrottle(false); break
-                case Qt.Key_S: carController.setBrake(false);    break
-            }
+            if (event.isAutoRepeat)
+                return
+
+            const key = event.text.toLowerCase()
+
+            if ("wц".includes(key))
+                carController.setThrottle(false)
+
+            else if ("sы".includes(key))
+                carController.setBrake(false)
         }
     }
 
-    Component.onCompleted: keyScope.forceActiveFocus()
+    Component.onCompleted: {
+        keyScope.forceActiveFocus()
+
+        console.log(
+            "After startup:",
+            keyScope.focus,
+            keyScope.activeFocus
+        )
+    }
 
     // ═══════════════════════════════════════════════════════════════════════
     //  ВЕРХНЯЯ ПОЛОСА
@@ -100,15 +127,21 @@ Window {
         Row {
             anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 70 }
             spacing: 2
-            Repeater {
-                model: 2
-                Text {
-                    text: "◄"
-                    font { pixelSize: 21 + index * 7; bold: true }
-                    color: "#1ecc50"
-                    opacity: carController.leftBlinkerOn ? 1.0 : 0.05
-                    Behavior on opacity { NumberAnimation { duration: 50 } }
-                }
+            Text {
+                text: "►"
+                font.pixelSize: 28; font.bold: true
+                color: "#1ecc50"
+                opacity: carController.leftBlinkerOn ? 1.0 : 0.05
+                Behavior on opacity { NumberAnimation { duration: 50 } }
+                rotation: 180
+            }
+            Text {
+                text: "►"
+                font.pixelSize: 28; font.bold: true
+                color: "#1ecc50"
+                opacity: carController.leftBlinkerOn ? 1.0 : 0.05
+                Behavior on opacity { NumberAnimation { duration: 50 } }
+                rotation: 180
             }
         }
 
@@ -132,15 +165,19 @@ Window {
         Row {
             anchors { right: parent.right; verticalCenter: parent.verticalCenter; rightMargin: 70 }
             spacing: 2
-            Repeater {
-                model: 2
-                Text {
-                    text: "►"
-                    font { pixelSize: 21 + index * 7; bold: true }
-                    color: "#1ecc50"
-                    opacity: carController.rightBlinkerOn ? 1.0 : 0.05
-                    Behavior on opacity { NumberAnimation { duration: 50 } }
-                }
+            Text {
+                text: "►"
+                font.pixelSize: 28; font.bold: true
+                color: "#1ecc50"
+                opacity: carController.rightBlinkerOn ? 1.0 : 0.05
+                Behavior on opacity { NumberAnimation { duration: 50 } }
+            }
+            Text {
+                text: "►"
+                font.pixelSize: 28; font.bold: true
+                color: "#1ecc50"
+                opacity: carController.rightBlinkerOn ? 1.0 : 0.05
+                Behavior on opacity { NumberAnimation { duration: 50 } }
             }
         }
 
@@ -286,16 +323,6 @@ Window {
                 Component.onCompleted: requestPaint()
             }
 
-            // Иконки предупреждений
-            Row {
-                anchors { bottom: parent.bottom; horizontalCenter: parent.horizontalCenter
-                          bottomMargin: tachZone.dialDiam * 0.17 }
-                spacing: 14
-                Text { id: oilWarn;   text: "🛢"; font.pixelSize: 22; opacity: 0.09 }
-                Text { id: checkWarn; text: "⚙";  font.pixelSize: 22; color: "#ff9800"; opacity: 0.09 }
-                Text { id: battWarn;  text: "🔋"; font.pixelSize: 22; opacity: 0.09 }
-            }
-
             // Стрелка тахометра
             Item {
                 anchors.centerIn: parent
@@ -423,11 +450,15 @@ Window {
                 id: obcDisplay
                 anchors {
                     horizontalCenter: parent.horizontalCenter
-                    bottom: parent.bottom
-                    bottomMargin: speedZone.dialDiam * 0.055
+                    // Позиционируем внутри круга: центр круга + смещение вниз
+                    // Нижний край круга = center + dialRad. Панель высотой 90px.
+                    // Отступаем от нижнего края круга внутрь на ~15% радиуса
+                    verticalCenter: parent.verticalCenter
+                    verticalCenterOffset: speedZone.dialRad * 0.73
+                    horizontalCenterOffset: -10
                 }
-                width:  speedZone.dialDiam * 0.58
-                height: 90
+                width:  speedZone.dialDiam * 0.45
+                height: 80
 
                 // Таймер системного времени
                 Timer {
@@ -472,8 +503,22 @@ Window {
 
                         Text {
                             anchors.centerIn: parent
-                            text: carController.gear
-                            color: "#00d0ea"
+                            text: {
+                                var g = carController.gear
+                                // Если gear пустой/0 — определяем по состоянию
+                                if (g && g !== "" && g !== "0" && g !== 0) return g
+                                // Газ нажат или машина едет — D
+                                if (carController.throttle || carController.speed > 0) return "D"
+                                return "P"
+                            }
+                            color: {
+                                var g = carController.gear
+                                var displayGear = (g && g !== "" && g !== "0" && g !== 0) ? g
+                                    : (carController.throttle || carController.speed > 0 ? "D" : "P")
+                                if (displayGear === "P") return "#808090"
+                                if (displayGear === "R") return "#ff6644"
+                                return "#00d0ea"
+                            }
                             font { pixelSize: 34; bold: true; family: "Helvetica Neue" }
                         }
                     }
@@ -732,14 +777,12 @@ Window {
                             var labels = ["50", "90", "130"]
                             var li = i / 3
                             var lr = r - 3 - 30
-                            ctx.save()
-                            ctx.translate(cx + Math.cos(angle)*lr, cy + Math.sin(angle)*lr)
-                            ctx.rotate(angle + PI * 0.5)
+                            var lx = cx + Math.cos(angle)*lr
+                            var ly = cy + Math.sin(angle)*lr
                             ctx.fillStyle = isHot ? "#ee4444" : "#b8b8c8"
-                            ctx.font = "bold 15px 'Helvetica Neue'"
+                            ctx.font = "bold 14px 'Helvetica Neue'"
                             ctx.textAlign = "center"; ctx.textBaseline = "middle"
-                            ctx.fillText(labels[li], 0, 0)
-                            ctx.restore()
+                            ctx.fillText(labels[li], lx, ly)
                         }
                     }
 
@@ -749,6 +792,12 @@ Window {
                     ctx.font = "16px sans-serif"
                     ctx.textAlign = "center"; ctx.textBaseline = "middle"
                     ctx.fillText("🌡", cx + Math.cos(tMidAngle)*iconR, cy + Math.sin(tMidAngle)*iconR - 4)
+
+                    // Подпись «ТЕМП» над дугой температуры
+                    ctx.fillStyle = "#606070"
+                    ctx.font = "bold 10px 'Helvetica Neue'"
+                    ctx.textAlign = "center"; ctx.textBaseline = "middle"
+                    ctx.fillText("ТЕМП", cx + Math.cos(tMidAngle)*(r - 3 - 56), cy + Math.sin(tMidAngle)*(r - 3 - 56) - 4)
 
                     // ──────────────────────────────────────────────────────
                     //  FUEL: CSS дуга от 30° до 150° (5ч → 7ч через 6ч)
@@ -793,14 +842,12 @@ Window {
                             var fLabels = ["1", "0.5", "0"]
                             var fli = j / 2
                             var flr = r - 3 - 30
-                            ctx.save()
-                            ctx.translate(cx + Math.cos(fa)*flr, cy + Math.sin(fa)*flr)
-                            ctx.rotate(fa + PI * 0.5)
+                            var flx = cx + Math.cos(fa)*flr
+                            var fly = cy + Math.sin(fa)*flr
                             ctx.fillStyle = isLow ? "#ff9922" : "#b8b8c8"
-                            ctx.font = "bold 15px 'Helvetica Neue'"
+                            ctx.font = "bold 14px 'Helvetica Neue'"
                             ctx.textAlign = "center"; ctx.textBaseline = "middle"
-                            ctx.fillText(fLabels[fli], 0, 0)
-                            ctx.restore()
+                            ctx.fillText(fLabels[fli], flx, fly)
                         }
                     }
 
@@ -812,6 +859,13 @@ Window {
                     ctx.fillText("⛽", cx + Math.cos(fuelIconAngle)*fuelIconR,
                                        cy + Math.sin(fuelIconAngle)*fuelIconR)
 
+                    // Подпись «ТОПЛИВО» под дугой топлива
+                    var fMidAngle = fCSSstart + 0.5 * fSweep   // = 90° CSS = 6ч
+                    ctx.fillStyle = "#606070"
+                    ctx.font = "bold 10px 'Helvetica Neue'"
+                    ctx.textAlign = "center"; ctx.textBaseline = "middle"
+                    ctx.fillText("ТОПЛИВО", cx + Math.cos(fMidAngle)*(r - 3 - 54), cy + Math.sin(fMidAngle)*(r - 3 - 54))
+
                     // ──────────────────────────────────────────────────────
                     //  Зелёная пиктограмма габаритов (правая сторона)
                     //  Правая сторона ≈ CSS 330°–30° (область 3ч)
@@ -820,6 +874,7 @@ Window {
                     ctx.textAlign = "center"; ctx.textBaseline = "middle"
                     // Позиция у 3ч = cx+r*cos(0), cy+r*sin(0), чуть внутрь
                     ctx.fillText("≡О≡", cx + r * 0.58, cy - r * 0.08)
+                    ctx.fillText("x1000 rpm", cx, cy - r * 0.28)
                 }
 
                 Component.onCompleted: requestPaint()
@@ -917,6 +972,31 @@ Window {
 
             // Центральный колпак поверх диска и хвостов стрелок
             NeedleCap { anchors.centerIn: parent; capSize: 28 }
+
+            // ── Подписи шкал поверх центрального диска ───────────────────
+            // ТЕМП — в верхней части диска (12 часов)
+            Text {
+                anchors {
+                    horizontalCenter: parent.horizontalCenter
+                    top: parent.top
+                    topMargin: parent.height * 0.465 - rightZone.dialRad * 0.82
+                }
+                text: "ТЕМП"
+                color: "#707080"
+                font { pixelSize: 11; bold: true; family: "Helvetica Neue"; letterSpacing: 1.0 }
+            }
+
+            // ТОПЛИВО — в нижней части диска (6 часов)
+            Text {
+                anchors {
+                    horizontalCenter: parent.horizontalCenter
+                    top: parent.top
+                    topMargin: parent.height * 0.555 + rightZone.dialRad * 0.64
+                }
+                text: "ТОПЛИВО"
+                color: "#707080"
+                font { pixelSize: 11; bold: true; family: "Helvetica Neue"; letterSpacing: 1.0 }
+            }
         }
     }
 }
