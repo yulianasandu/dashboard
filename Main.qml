@@ -114,6 +114,10 @@ Window {
                 tachZone.batteryWarning = !tachZone.batteryWarning
                 rightZone.lightWarning = !rightZone.lightWarning
             }
+            else if (event.key === Qt.Key_Tab) {
+                    tachZone.useExternalData = !tachZone.useExternalData
+                    console.log("Режим изменен! Внешние данные (ESP32): " + tachZone.useExternalData)
+                }
         }
 
         Keys.onReleased: function(event) {
@@ -289,26 +293,21 @@ Window {
         // ╚══════════════════════════════════════════════════════════════════╝
         Item {
             id: tachZone
-            // Правый край тахометра заходит под спидометр на ~25% диаметра тахометра
-            // x Item = центр_тахзоны - width/2
-            // центр_тахзоны = speedCenter - speedRad - tachRad + overlap
-            // overlap = tachDiam * 0.25
-            // Проще: правый край тахзоны = speedCenter - speedRad + tachDiam*0.25
-            // x = правый_край - width = speedCenter - speedRad + tachDiam*0.25 - width
             x: gaugesArea.width * 0.5 - speedZone.dialDiam * 0.5 + tachZone.dialDiam * 0.25 - tachZone.width
             y: 0
             width: gaugesArea.width * 0.35
             height: gaugesArea.height
             z: 0
 
+            property bool useExternalData: true
             property bool oilWarning: false
             property bool engineWarning: false
             property bool batteryWarning: false
 
             property real dialDiam: Math.min(width, height) * 0.94
             property real dialRad:  dialDiam * 0.5
-            property real rpmFraction: Math.min(carController.rpm / 7000.0, 1.0)
-            property real needleAngle: -170.0 + rpmFraction * 248.0
+            property real rpmFraction: Math.min((useExternalData ? CanReceiver.rpm : carController.rpm) / 7000.0, 1.0)
+            property real needleAngle: -170.0 + rpmFraction * 243.0
 
             ChromeWell { anchors.centerIn: parent; dialSize: tachZone.dialDiam }
 
@@ -378,7 +377,7 @@ Window {
                 Component.onCompleted: requestPaint()
             }
 
-            // Стрелка тахометра
+            // Стрелка тахометрв
             Item {
                 anchors.centerIn: parent
                 width: tachZone.dialDiam; height: tachZone.dialDiam
@@ -417,12 +416,12 @@ Window {
             Row {
                 id: warningIcons
 
-                property int iconSize: 50
+                property int iconSize: 70
 
                 anchors.horizontalCenter: parent.horizontalCenter
-                anchors.horizontalCenterOffset: 10
+                anchors.horizontalCenterOffset: 20
                 anchors.bottom: parent.bottom
-                anchors.bottomMargin: 160
+                anchors.bottomMargin: 100
 
                 spacing: 20
 
@@ -466,9 +465,11 @@ Window {
             height: gaugesArea.height
             z: 1
 
-            property real dialDiam: Math.min(width, height) * 0.96
+            property bool useExternalData: tachZone.useExternalData
+
+            property real dialDiam: Math.min(width, height) * 0.94
             property real dialRad:  dialDiam * 0.5
-            property real speedFraction: carController.speed / 200.0
+            property real speedFraction: (useExternalData ? CanReceiver.speed : carController.speed) / 200.0
             property real needleAngle: -135.0 + speedFraction * 270.0
 
             ChromeWell { anchors.centerIn: parent; dialSize: speedZone.dialDiam }
@@ -561,25 +562,6 @@ Window {
                        verticalAlignment: Text.AlignVCenter
                    }
             }
-
-            // ── Боковые закрывашки: перекрывают части боковых приборов ──────
-            // Рисуются поверх боковых колодцев благодаря z:1 у speedZone
-            // Левая: закрывает правый край тахометра который заходит под спидометр
-            Rectangle {
-                x: 0
-                y: (speedZone.height - speedZone.dialDiam * 0.8) / 2
-                width: (speedZone.width - speedZone.dialDiam) / 2 - 14
-                height: speedZone.dialDiam * 0.8
-                color: "#0b0b0f"
-            }
-            // Правая: закрывает левый край правого прибора
-            Rectangle {
-                x: speedZone.width - (speedZone.width - speedZone.dialDiam) / 2 + 14
-                y: (speedZone.height - speedZone.dialDiam * 0.8) / 2
-                width: (speedZone.width - speedZone.dialDiam) / 2 - 14
-                height: speedZone.dialDiam * 0.8
-                color: "#0b0b0f"
-            }
             // Компоновка: верхняя строка [GEAR | ODO | VOLT] + нижняя строка [часы]
             Item {
                 id: obcDisplay
@@ -639,20 +621,24 @@ Window {
                         Text {
                             anchors.centerIn: parent
                             text: {
-                                var g = carController.gear
-                                // Если gear пустой/0 — определяем по состоянию
-                                if (g && g !== "" && g !== "0" && g !== 0) return g
-                                // Газ нажат или машина едет — D
-                                if (carController.throttle || carController.speed > 0) return "D"
-                                return "P"
+                               var currentGear = speedZone.useExternalData ? CanReceiver.gear : carController.gear
+                               var currentSpeed = speedZone.useExternalData ? CanReceiver.speed : carController.speed
+                               var isThrottling = speedZone.useExternalData ? false : carController.throttle // на ESP32 педаль определяет сама машина
+
+                               if (currentGear && currentGear !== "" && currentGear !== "0" && currentGear !== 0) return currentGear
+                               if (isThrottling || currentSpeed > 0) return "D"
+                               return "P"
                             }
                             color: {
-                                var g = carController.gear
-                                var displayGear = (g && g !== "" && g !== "0" && g !== 0) ? g
-                                    : (carController.throttle || carController.speed > 0 ? "D" : "P")
-                                if (displayGear === "P") return "#808090"
-                                if (displayGear === "R") return "#ff6644"
-                                return "#00d0ea"
+                               var currentGear = speedZone.useExternalData ? CanReceiver.gear : carController.gear
+                               var currentSpeed = speedZone.useExternalData ? CanReceiver.speed : carController.speed
+                               var isThrottling = speedZone.useExternalData ? false : carController.throttle
+
+                               var displayGear = (currentGear && currentGear !== "" && currentGear !== "0" && currentGear !== 0) ? currentGear
+                                   : (isThrottling || currentSpeed > 0 ? "D" : "P")
+                               if (displayGear === "P") return "#808090"
+                               if (displayGear === "R") return "#ff6644"
+                               return "#00d0ea"
                             }
                             font { pixelSize: 34; bold: true; family: eurostileFont.name }
                         }
@@ -775,21 +761,27 @@ Window {
             z: 0
 
             //property real dialDiam: Math.min(width, height) * 0.94
-            property real dialDiam: gaugesArea.width * 0.35 * 0.94
+            property real dialDiam: Math.min(width, height) * 0.94
             property real dialRad:  dialDiam * 0.5
             property real scaleOffset: 20.0
 
             // ── значения физики ───────────────────────────────────────────
+            // Автоматически синхронизируем режим с общим флагом тахометра
+            property bool useExternalData: tachZone.useExternalData
+
             // Температура охлаждающей жидкости 50..130°C
-            property real tempVal:      90.0   // подключить: carController.coolantTemp
+            // Если от ESP32 — берем из сети, иначе — константа 90.0 (или ваше старое свойство)
+            property real tempVal:      useExternalData ? CanReceiver.coolant : 90.0
             property real tempFraction: (tempVal - 50.0) / 80.0
 
             property real tempNeedle: (-60.0 + scaleOffset) + tempFraction * 90.0
             Behavior on tempNeedle { NumberAnimation { duration: 500; easing.type: Easing.OutCubic } }
 
             // Уровень топлива 0..1
-            property real fuelVal:      0.65   // подключить: carController.fuelLevel
-            property real fuelNeedle: 60.0 + fuelVal * 60.0
+            // ВАЖНО: делим CanReceiver.fuel на 100.0, так как прошивка шлет проценты (0..100)
+            property real fuelVal:      useExternalData ? (CanReceiver.fuel / 100.0) : 0.65
+
+            property real fuelNeedle: 50.0 + fuelVal * 80.0
             Behavior on fuelNeedle { NumberAnimation { duration: 500; easing.type: Easing.OutCubic } }
 
             property bool lightWarning: false
@@ -978,16 +970,6 @@ Window {
             NeedleCap {
                 anchors.centerIn: parent
                 capSize: 120
-                Image {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.bottom: parent.bottom
-                    anchors.bottomMargin: 5
-
-                    source: "qrc:/qt/qml/dashboard/icons/white_fuel.png"
-                    width: 25
-                    height: 25
-                    fillMode: Image.PreserveAspectFit
-                }
 
                 Image {
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -1010,7 +992,7 @@ Window {
                 anchors.centerIn: parent
 
                 property real iconRadius: rightZone.dialRad * 0.72
-                property int iconSize: 50
+                property int iconSize: 70
 
                 function posX(angleDeg) {
                     return width / 2
@@ -1028,10 +1010,10 @@ Window {
                     height: temp_fuelIcons.iconSize
                     fillMode: Image.PreserveAspectFit
 
-                    x: temp_fuelIcons.posX(-15) - width/2 + 15
-                    y: temp_fuelIcons.posY(-15) - height/2 - 40
+                    x: temp_fuelIcons.posX(0) - width/2 + 23
+                    y: temp_fuelIcons.posY(-30) - height/2
 
-                    visible: rightZone.lightWarning
+                    visible: rightZone.useExternalData ? CanReceiver.lightWarning : rightZone.lightWarning
                 }
 
                 Image {
@@ -1040,37 +1022,36 @@ Window {
                     height: temp_fuelIcons.iconSize
                     fillMode: Image.PreserveAspectFit
 
-                    x: temp_fuelIcons.posX(10) - width/2 + 25
+                    x: temp_fuelIcons.posX(10) - width/2 + 45
                     y: temp_fuelIcons.posY(10) - height/2 - 25
 
-                    visible: rightZone.lightWarning
+                    visible: rightZone.useExternalData ? CanReceiver.lightWarning : rightZone.lightWarning
                 }
 
                 Image {
                     source: "qrc:/qt/qml/dashboard/icons/fog_front.svg"
-                    width: 45
-                    height: 45
+                    width: 60
+                    height: 60
                     fillMode: Image.PreserveAspectFit
 
-                    x: temp_fuelIcons.posX(35) - width/2 + 36
-                    y: temp_fuelIcons.posY(35) - height/2 - 10
+                    x: temp_fuelIcons.posX(35) - width/2 + 55
+                    y: temp_fuelIcons.posY(35) - height/2
 
-                    visible: rightZone.lightWarning
-                }
+                    visible: rightZone.useExternalData ? CanReceiver.lightWarning : rightZone.lightWarning                }
             }
 
             Image {
                 anchors.horizontalCenter: parent.horizontalCenter
-                anchors.horizontalCenterOffset: -80
+                anchors.horizontalCenterOffset: -130
                 anchors.bottom: parent.bottom
-                anchors.bottomMargin: 260
+                anchors.bottomMargin: 230
 
                 source: "qrc:/qt/qml/dashboard/icons/yellow_fuel.png"
-                width: 30
-                height: 30
+                width: 40
+                height: 40
                 fillMode: Image.PreserveAspectFit
 
-                visible: rightZone.lightWarning
+                visible: rightZone.useExternalData ? (CanReceiver.fuel < 15.0) : rightZone.lightWarning
             }
         }
     }
