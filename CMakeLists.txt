@@ -26,6 +26,15 @@ qt_add_qml_module(appdashboard
         icons/battery.png
         icons/low_beam.png
         icons/high_beam.png
+        icons/yellow_fuel.png
+        icons/white_fuel.png
+        icons/temp.png
+        icons/fog_front.svg
+        icons/turn_left.svg
+        icons/turn_right.svg
+        icons/side_lamps.svg
+
+        fonts/eurostile.ttf
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.

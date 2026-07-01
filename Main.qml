@@ -15,14 +15,62 @@ Window {
 
     CarController { id: carController }
 
+    FontLoader {
+        id: eurostileFont
+        source: "fonts/eurostile.ttf"
+    }
+
     // ── фон ─────────────────────────────────────────────────────────────────
     Rectangle {
+        id: bgRect
         anchors.fill: parent
+        color: "#0c0c0e"
+        gradient: RadialGradient {
+            centerX: root.width * 0.5; centerY: root.height * 0.46
+            centerRadius: root.width * 0.62
+            focalX: centerX; focalY: centerY
+            GradientStop { position: 0.0;  color: "#2c2c31" }
+            GradientStop { position: 0.35; color: "#1c1c20" }
+            GradientStop { position: 0.65; color: "#131316" }
+            GradientStop { position: 1.0;  color: "#080809" }
+        }
+    }
+    // ── тень слева и справа (уход в края, как на референсе) ────────────────
+    Rectangle {
+        anchors { top: parent.top; bottom: parent.bottom; left: parent.left }
+        width: parent.width * 0.16
+        gradient: Gradient {
+            orientation: Gradient.Horizontal
+            GradientStop { position: 0.0; color: "#000000" }
+            GradientStop { position: 1.0; color: "#00000000" }
+        }
+    }
+    Rectangle {
+        anchors { top: parent.top; bottom: parent.bottom; right: parent.right }
+        width: parent.width * 0.16
+        gradient: Gradient {
+            orientation: Gradient.Horizontal
+            GradientStop { position: 0.0; color: "#00000000" }
+            GradientStop { position: 1.0; color: "#000000" }
+        }
+    }
+    // ── чёрные края сверху/снизу ───────────────────────────────────────────
+    Rectangle {
+        anchors { top: parent.top; left: parent.left; right: parent.right }
+        height: parent.height * 0.22
         gradient: Gradient {
             orientation: Gradient.Vertical
-            GradientStop { position: 0.0; color: "#17171d" }
-            GradientStop { position: 0.6; color: "#0b0b0f" }
-            GradientStop { position: 1.0; color: "#070709" }
+            GradientStop { position: 0.0; color: "#000000" }
+            GradientStop { position: 1.0; color: "#00000000" }
+        }
+    }
+    Rectangle {
+        anchors { bottom: parent.bottom; left: parent.left; right: parent.right }
+        height: parent.height * 0.22
+        gradient: Gradient {
+            orientation: Gradient.Vertical
+            GradientStop { position: 0.0; color: "#00000000" }
+            GradientStop { position: 1.0; color: "#000000" }
         }
     }
 
@@ -33,7 +81,6 @@ Window {
 
         if (active) keyScope.forceActiveFocus()
     }
-
 
     FocusScope {
         id: keyScope
@@ -84,6 +131,7 @@ Window {
     }
 
     Component.onCompleted: {
+        console.log("Font name:", eurostileFont.name)
         keyScope.forceActiveFocus()
 
         console.log(
@@ -102,23 +150,13 @@ Window {
         height: 50
 
         Row {
-            anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 70 }
-            spacing: 2
-            Text {
-                text: "►"
-                font.pixelSize: 28; font.bold: true
-                color: "#1ecc50"
+            anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 75 }
+            Image {
+                source: "qrc:/qt/qml/dashboard/icons/turn_left.svg"
+                width: 32; height: 32
+                fillMode: Image.PreserveAspectFit
                 opacity: carController.leftBlinkerOn ? 1.0 : 0.05
                 Behavior on opacity { NumberAnimation { duration: 50 } }
-                rotation: 180
-            }
-            Text {
-                text: "►"
-                font.pixelSize: 28; font.bold: true
-                color: "#1ecc50"
-                opacity: carController.leftBlinkerOn ? 1.0 : 0.05
-                Behavior on opacity { NumberAnimation { duration: 50 } }
-                rotation: 180
             }
         }
 
@@ -126,7 +164,7 @@ Window {
             anchors { horizontalCenter: parent.horizontalCenter; top: parent.top; topMargin: 3 }
             text: "▲  АВАРИЙНАЯ"
             color: "#ff3518"
-            font { pixelSize: 17; bold: true; family: "Helvetica Neue" }
+            font { pixelSize: 17; bold: true; family: eurostileFont.name }
             visible: carController.leftBlinker && carController.rightBlinker
             opacity: carController.leftBlinkerOn ? 1.0 : 0.07
             Behavior on opacity { NumberAnimation { duration: 50 } }
@@ -134,25 +172,17 @@ Window {
 
         Text {
             anchors { horizontalCenter: parent.horizontalCenter; bottom: parent.bottom; bottomMargin: 5 }
-            text: "W — ГАЗ    S — ТОРМОЗ    A — ◄    D — ►    F — АВАРИЙКА  1 - ИКОНКИ"
-            color: "#252530"
-            font { pixelSize: 12; family: "Helvetica Neue"; letterSpacing: 1.6 }
+            text: "W — ГАЗ    S — ТОРМОЗ    A, D — ПОВОРОТНИКИ    F — АВАРИЙКА  1 - ИКОНКИ"
+            color: "#3d3d4f"
+            font { pixelSize: 12; family: eurostileFont.name; letterSpacing: 1.6 }
         }
 
         Row {
             anchors { right: parent.right; verticalCenter: parent.verticalCenter; rightMargin: 70 }
-            spacing: 2
-            Text {
-                text: "►"
-                font.pixelSize: 28; font.bold: true
-                color: "#1ecc50"
-                opacity: carController.rightBlinkerOn ? 1.0 : 0.05
-                Behavior on opacity { NumberAnimation { duration: 50 } }
-            }
-            Text {
-                text: "►"
-                font.pixelSize: 28; font.bold: true
-                color: "#1ecc50"
+            Image {
+                source: "qrc:/qt/qml/dashboard/icons/turn_right.svg"
+                width: 32; height: 32
+                fillMode: Image.PreserveAspectFit
                 opacity: carController.rightBlinkerOn ? 1.0 : 0.05
                 Behavior on opacity { NumberAnimation { duration: 50 } }
             }
@@ -179,35 +209,38 @@ Window {
         component ChromeWell: Item {
             property real dialSize: 300
 
+            // тонкая тёмная линия-разделитель между бортиком и циферблатом
             Rectangle {
                 anchors.centerIn: parent
-                width: dialSize + 28; height: width; radius: width / 2
+                width: dialSize + 13; height: width; radius: width / 2
                 gradient: RadialGradient {
-                    centerX: parent.width * 0.36; centerY: parent.height * 0.24
-                    centerRadius: parent.width * 0.52
+                    centerX: parent.width * 0.34; centerY: parent.height * 0.22
+                    centerRadius: parent.width * 0.62
                     focalX: centerX; focalY: centerY
-                    GradientStop { position: 0.0;  color: "#8e8e98" }
-                    GradientStop { position: 0.28; color: "#363640" }
-                    GradientStop { position: 0.55; color: "#cecede" }
-                    GradientStop { position: 0.78; color: "#232330" }
-                    GradientStop { position: 1.0;  color: "#767680" }
+                    GradientStop { position: 0.0;  color: "#f4f4f6" }
+                    GradientStop { position: 0.2;  color: "#4c4c54" }
+                    GradientStop { position: 0.5;  color: "#f4f4f6" }
+                    GradientStop { position: 0.6;  color: "#4c4c54" }
+                    GradientStop { position: 0.9;  color: "#f4f4f6" }
+                    GradientStop { position: 1.0;  color: "#1f1e1e" }
                 }
             }
             Rectangle {
                 anchors.centerIn: parent
-                width: dialSize + 9; height: width; radius: width / 2
-                color: "#040406"
+                width: dialSize + 6; height: width; radius: width / 2
+                color: "#040404"
             }
             Rectangle {
+                id: dialFace
                 anchors.centerIn: parent
                 width: dialSize; height: width; radius: width / 2
                 gradient: RadialGradient {
-                    centerX: parent.width * 0.50; centerY: parent.height * 0.38
-                    centerRadius: parent.width * 0.56
+                    centerX: dialFace.width * 0.50; centerY: dialFace.height * 0.38
+                    centerRadius: dialFace.width * 0.56
                     focalX: centerX; focalY: centerY
-                    GradientStop { position: 0.0;  color: "#22222e" }
-                    GradientStop { position: 0.48; color: "#101016" }
-                    GradientStop { position: 1.0;  color: "#040406" }
+                    GradientStop { position: 0.0;  color: "#26262a" }
+                    GradientStop { position: 0.48; color: "#131315" }
+                    GradientStop { position: 1.0;  color: "#040404" }
                 }
             }
         }
@@ -335,17 +368,12 @@ Window {
 
                             ctx.rotate(angle + Math.PI * 0.5)
                             ctx.fillStyle = isRed ? "#ff3030" : "#f5f5f5"
-                            ctx.font = "bold 20px 'Helvetica Neue'"
+                            ctx.font = "bold 20px '" + eurostileFont.name + "'"
                             ctx.textAlign = "center"; ctx.textBaseline = "middle"
                             ctx.fillText(num, 0, 0)
                             ctx.restore()
                         }
                     }
-
-                    ctx.fillStyle = "#3a3a48"
-                    ctx.font = "12px 'Helvetica Neue'"
-                    ctx.textAlign = "center"; ctx.textBaseline = "middle"
-                    ctx.fillText("x1000 rpm", cx, cy - r * 0.29)
                 }
                 Component.onCompleted: requestPaint()
             }
@@ -370,7 +398,21 @@ Window {
                 }
             }
 
-            NeedleCap { anchors.centerIn: parent; capSize: 80 }
+            NeedleCap {
+                anchors.centerIn: parent
+                capSize: 120
+                Text {
+                       anchors.centerIn: parent
+
+                       text: "x1000 rpm"
+                       color: "#f0f0f0"
+                       font.pixelSize: 13
+                       font.family: eurostileFont.name
+
+                       horizontalAlignment: Text.AlignHCenter
+                       verticalAlignment: Text.AlignVCenter
+                   }
+            }
 
             Row {
                 id: warningIcons
@@ -474,17 +516,12 @@ Window {
                                           cy + Math.sin(angle) * lr)
                             ctx.rotate(angle + Math.PI * 0.5)
                             ctx.fillStyle = "#dcdce8"
-                            ctx.font = "bold 21px 'Helvetica Neue'"
+                            ctx.font = "bold 21px '" + eurostileFont.name + "'"
                             ctx.textAlign = "center"; ctx.textBaseline = "middle"
                             ctx.fillText(i, 0, 0)
                             ctx.restore()
                         }
                     }
-
-                    ctx.fillStyle = "#383844"
-                    ctx.font = "14px 'Helvetica Neue'"
-                    ctx.textAlign = "center"; ctx.textBaseline = "middle"
-                    ctx.fillText("km/h", cx, cy - r * 0.22)
                 }
                 Component.onCompleted: requestPaint()
             }
@@ -509,7 +546,21 @@ Window {
                 }
             }
 
-            NeedleCap { anchors.centerIn: parent; capSize: 80 }
+            NeedleCap {
+                anchors.centerIn: parent
+                capSize: 120
+                Text {
+                       anchors.centerIn: parent
+
+                       text: "km/h"
+                       color: "#f0f0f0"
+                       font.pixelSize: 13
+                       font.family: eurostileFont.name
+
+                       horizontalAlignment: Text.AlignHCenter
+                       verticalAlignment: Text.AlignVCenter
+                   }
+            }
 
             // ── Боковые закрывашки: перекрывают части боковых приборов ──────
             // Рисуются поверх боковых колодцев благодаря z:1 у speedZone
@@ -603,7 +654,7 @@ Window {
                                 if (displayGear === "R") return "#ff6644"
                                 return "#00d0ea"
                             }
-                            font { pixelSize: 34; bold: true; family: "Helvetica Neue" }
+                            font { pixelSize: 34; bold: true; family: eurostileFont.name }
                         }
                     }
 
@@ -634,19 +685,19 @@ Window {
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 text: "ODO"
                                 color: "#282838"
-                                font { pixelSize: 9; letterSpacing: 1.2; family: "Helvetica Neue" }
+                                font { pixelSize: 9; letterSpacing: 1.2; family: eurostileFont.name }
                             }
                             Row {
                                 anchors.horizontalCenter: parent.horizontalCenter; spacing: 3
                                 Text {
                                     text: "4"
                                     color: "#b8b8c8"
-                                    font { pixelSize: 18; family: "Helvetica Neue" }
+                                    font { pixelSize: 18; family: eurostileFont.name }
                                 }
                                 Text {
                                     text: "km"
                                     color: "#404050"
-                                    font { pixelSize: 11; family: "Helvetica Neue" }
+                                    font { pixelSize: 11; family: eurostileFont.name }
                                     anchors.baseline: parent.children[0].baseline
                                 }
                             }
@@ -679,19 +730,19 @@ Window {
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 text: "VOLT"
                                 color: "#282838"
-                                font { pixelSize: 9; letterSpacing: 1.2; family: "Helvetica Neue" }
+                                font { pixelSize: 9; letterSpacing: 1.2; family: eurostileFont.name }
                             }
                             Row {
                                 anchors.horizontalCenter: parent.horizontalCenter; spacing: 3
                                 Text {
                                     text: "13.6"
                                     color: "#b8b8c8"
-                                    font { pixelSize: 18; family: "Helvetica Neue" }
+                                    font { pixelSize: 18; family: eurostileFont.name }
                                 }
                                 Text {
                                     text: "V"
                                     color: "#404050"
-                                    font { pixelSize: 11; family: "Helvetica Neue" }
+                                    font { pixelSize: 11; family: eurostileFont.name }
                                     anchors.baseline: parent.children[0].baseline
                                 }
                             }
@@ -709,7 +760,7 @@ Window {
                         anchors.centerIn: parent
                         text: Qt.formatDateTime(new Date(), "hh:mm")
                         color: "#c8c8d8"
-                        font { pixelSize: 28; bold: true; family: "Helvetica Neue" }
+                        font { pixelSize: 28; bold: true; family: eurostileFont.name }
                     }
                 }
             }
@@ -803,7 +854,7 @@ Window {
                             var lx = cx + Math.cos(angle)*lr
                             var ly = cy + Math.sin(angle)*lr
                             ctx.fillStyle = isHot ? "#ee4444" : "#d8d8d8"
-                            ctx.font = "bold 14px 'Helvetica Neue'"
+                            ctx.font = "bold 20px '" + eurostileFont.name + "'"
                             ctx.textAlign = "center"; ctx.textBaseline = "middle"
                             ctx.fillText(labels[li], lx, ly)
                         }
@@ -820,6 +871,16 @@ Window {
                     var fSweep    = 80.0 * toRad
                     var fOrangeFrom = fCSSstart + 0.75 * fSweep
 
+                    // Правая соединительная дуга
+                    var bridgeStart = tCSSstart + tSweep;   // конец температуры (130)
+                    var bridgeEnd   = fCSSstart;            // начало топлива (1)
+
+                    ctx.beginPath()
+                    ctx.arc(cx, cy, r - 20, bridgeStart, bridgeEnd, false)
+                    ctx.strokeStyle = "#f0f0f0"
+                    ctx.lineWidth = 2
+                    ctx.stroke()
+
                     //белая линия шкалы топлива
                     ctx.beginPath()
                     ctx.arc(cx, cy, r - 3, fCSSstart, fOrangeFrom, false)
@@ -835,7 +896,7 @@ Window {
                     ctx.stroke()
 
                     // Деления FUEL: 4 секции (0..4 = 5 делений)
-                    var fTicks = 6
+                    var fTicks = 4
                     for (var j = 0; j <= fTicks; j++) {
                         var ff     = j / fTicks
                         var fa     = fCSSstart + ff * fSweep
@@ -851,13 +912,13 @@ Window {
 
                         if (fmaj) {
                             // 3 подписи: "1" (j=0, Full=5ч), "0.5" (j=2, 6ч), "0" (j=4, Empty=7ч)
-                            var fLabels = ["1", "0.5", "0.25", "0"]
+                            var fLabels = ["1", "0.5", "0"]
                             var fli = j / 2
                             var flr = r + 13
                             var flx = cx + Math.cos(fa)*flr
                             var fly = cy + Math.sin(fa)*flr
                             ctx.fillStyle = isLow ? "#ff9922" : "#d8d8d8"
-                            ctx.font = "bold 14px 'Helvetica Neue'"
+                            ctx.font = "bold 20px '" + eurostileFont.name + "'"
                             ctx.textAlign = "center"; ctx.textBaseline = "middle"
                             ctx.fillText(fLabels[fli], flx, fly)
                         }
@@ -914,25 +975,61 @@ Window {
                 }
             }
             // Центральный колпак поверх диска и хвостов стрелок
-            NeedleCap { anchors.centerIn: parent; capSize: 80}
+            NeedleCap {
+                anchors.centerIn: parent
+                capSize: 120
+                Image {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.bottom: parent.bottom
+                    anchors.bottomMargin: 5
 
-            Column {
-                id: temp_fuelIcons
-
-                property int iconSize: 50
-
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.horizontalCenterOffset: 160
-                anchors.bottom: parent.bottom
-                anchors.bottomMargin: 300
-
-                spacing: 20
+                    source: "qrc:/qt/qml/dashboard/icons/white_fuel.png"
+                    width: 25
+                    height: 25
+                    fillMode: Image.PreserveAspectFit
+                }
 
                 Image {
-                    source: "qrc:/qt/qml/dashboard/icons/low_beam.png"
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.top: parent.top
+                    anchors.topMargin: 5
+
+                    source: "qrc:/qt/qml/dashboard/icons/temp.png"
+                    width: 50
+                    height: 50
+                    fillMode: Image.PreserveAspectFit
+                }
+            }
+
+            Item {
+                id: temp_fuelIcons
+
+                width: rightZone.dialDiam
+                height: rightZone.dialDiam
+
+                anchors.centerIn: parent
+
+                property real iconRadius: rightZone.dialRad * 0.72
+                property int iconSize: 50
+
+                function posX(angleDeg) {
+                    return width / 2
+                            + Math.cos(angleDeg * Math.PI / 180) * iconRadius
+                }
+
+                function posY(angleDeg) {
+                    return height / 2
+                            + Math.sin(angleDeg * Math.PI / 180) * iconRadius
+                }
+
+                Image {
+                    source: "qrc:/qt/qml/dashboard/icons/side_lamps.svg"
                     width: temp_fuelIcons.iconSize
                     height: temp_fuelIcons.iconSize
                     fillMode: Image.PreserveAspectFit
+
+                    x: temp_fuelIcons.posX(-15) - width/2 + 15
+                    y: temp_fuelIcons.posY(-15) - height/2 - 40
 
                     visible: rightZone.lightWarning
                 }
@@ -943,8 +1040,37 @@ Window {
                     height: temp_fuelIcons.iconSize
                     fillMode: Image.PreserveAspectFit
 
+                    x: temp_fuelIcons.posX(10) - width/2 + 25
+                    y: temp_fuelIcons.posY(10) - height/2 - 25
+
                     visible: rightZone.lightWarning
                 }
+
+                Image {
+                    source: "qrc:/qt/qml/dashboard/icons/fog_front.svg"
+                    width: 45
+                    height: 45
+                    fillMode: Image.PreserveAspectFit
+
+                    x: temp_fuelIcons.posX(35) - width/2 + 36
+                    y: temp_fuelIcons.posY(35) - height/2 - 10
+
+                    visible: rightZone.lightWarning
+                }
+            }
+
+            Image {
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.horizontalCenterOffset: -80
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: 260
+
+                source: "qrc:/qt/qml/dashboard/icons/yellow_fuel.png"
+                width: 30
+                height: 30
+                fillMode: Image.PreserveAspectFit
+
+                visible: rightZone.lightWarning
             }
         }
     }
