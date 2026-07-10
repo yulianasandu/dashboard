@@ -1,0 +1,1325 @@
+{
+  "0x12e": [
+    {
+      "target": "TransversalAcceleration",
+      "type": "value",
+      "startByte": 1,
+      "byteCount": 2,
+      "endian": "big",
+      "shift": 0,
+      "bits": 16,
+      "factor": 0.004,
+      "offset": -131.068,
+      "unit": "g",
+      "description": "65535=нет данных",
+      "message": "BRAKE_CANHS_RNr_04"
+    },
+    {
+      "target": "LongitudinalAccelerationProc",
+      "type": "value",
+      "startByte": 0,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 0,
+      "bits": 8,
+      "factor": 0.05,
+      "offset": -10.0,
+      "unit": "m/s²",
+      "description": "255=нет данных",
+      "message": "BRAKE_CANHS_RNr_04"
+    }
+  ],
+  "0x17a": [
+    {
+      "target": "EstimatedPowertrainWheelTorque",
+      "type": "value",
+      "startByte": 6,
+      "byteCount": 2,
+      "endian": "big",
+      "shift": 0,
+      "bits": 16,
+      "factor": 0.5,
+      "offset": -6400.0,
+      "unit": "Nm",
+      "description": "65535=нет данных",
+      "message": "TORQUE_AT_CANHS_RNr_01"
+    },
+    {
+      "target": "AnticipatedCurrentShift",
+      "type": "value",
+      "startByte": 5,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 0,
+      "bits": 2,
+      "factor": 1.0,
+      "offset": 0.0,
+      "description": "3=текущая передача,2=расцеплено,1=паркинг/нейтраль,0=нет данных",
+      "message": "TORQUE_AT_CANHS_RNr_01"
+    },
+    {
+      "target": "ATCoolingFanSpeedRequest",
+      "type": "value",
+      "startByte": 5,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 2,
+      "bits": 2,
+      "factor": 1.0,
+      "offset": 0.0,
+      "description": "3=выс. скорость,2=сред.,1=низк.,0=не запрошен",
+      "message": "TORQUE_AT_CANHS_RNr_01"
+    },
+    {
+      "target": "RGB_MajorFailure",
+      "type": "value",
+      "startByte": 5,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 4,
+      "bits": 2,
+      "factor": 1.0,
+      "offset": 0.0,
+      "description": "2=серьёзный сбой,1=нет сбоя,0=не исп.",
+      "message": "TORQUE_AT_CANHS_RNr_01"
+    },
+    {
+      "target": "TorqueConverterState",
+      "type": "value",
+      "startByte": 5,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 6,
+      "bits": 2,
+      "factor": 1.0,
+      "offset": 0.0,
+      "description": "2=заблокирован,1=скольжение,0=разблокирован",
+      "message": "TORQUE_AT_CANHS_RNr_01"
+    },
+    {
+      "target": "ManualModeState",
+      "type": "flag",
+      "byte": 4,
+      "bit": 0,
+      "description": "1=ручной режим,0=не ручной",
+      "message": "TORQUE_AT_CANHS_RNr_01"
+    },
+    {
+      "target": "AT_Clock",
+      "type": "value",
+      "startByte": 4,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 1,
+      "bits": 4,
+      "factor": 1.0,
+      "offset": 0.0,
+      "description": "счётчик кадра",
+      "message": "TORQUE_AT_CANHS_RNr_01"
+    },
+    {
+      "target": "AT_TorqueControlType",
+      "type": "value",
+      "startByte": 4,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 5,
+      "bits": 3,
+      "factor": 1.0,
+      "offset": 0.0,
+      "description": "7=полный контроль,6=нижн.огр,5=верхн.огр,0=без огр.",
+      "message": "TORQUE_AT_CANHS_RNr_01"
+    },
+    {
+      "target": "TransmRangeEngaged_Current",
+      "type": "value",
+      "startByte": 3,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 0,
+      "bits": 4,
+      "factor": 1.0,
+      "offset": 0.0,
+      "description": "12=limphome,11=CVT,10=N/P,9=R,8-1=передачи,0=расцеплено",
+      "message": "TORQUE_AT_CANHS_RNr_01"
+    },
+    {
+      "target": "TransmRangeEngaged_Target",
+      "type": "value",
+      "startByte": 3,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 4,
+      "bits": 4,
+      "factor": 1.0,
+      "offset": 0.0,
+      "description": "те же значения, целевое состояние",
+      "message": "TORQUE_AT_CANHS_RNr_01"
+    },
+    {
+      "target": "Limit_SlowTorqueRequest",
+      "type": "value",
+      "startByte": 1,
+      "byteCount": 2,
+      "endian": "big",
+      "shift": 0,
+      "bits": 12,
+      "factor": 0.5,
+      "offset": -400.0,
+      "unit": "Nm",
+      "description": "4095=нет данных",
+      "message": "TORQUE_AT_CANHS_RNr_01"
+    },
+    {
+      "target": "FastTorqueRequest",
+      "type": "value",
+      "startByte": 0,
+      "byteCount": 2,
+      "endian": "big",
+      "shift": 4,
+      "bits": 12,
+      "factor": 0.5,
+      "offset": -400.0,
+      "unit": "Nm",
+      "description": "4095=нет данных",
+      "message": "TORQUE_AT_CANHS_RNr_01"
+    }
+  ],
+  "0x17e": [
+    {
+      "target": "AnticipatedRGBPumpState",
+      "type": "value",
+      "startByte": 6,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 0,
+      "bits": 2,
+      "factor": 1.0,
+      "offset": 0.0,
+      "description": "2=насос неактивен,1=насос активен,0=нет данных",
+      "message": "TORQUE_AT_CANHS_RNr_02"
+    },
+    {
+      "target": "SlipControlStatus",
+      "type": "value",
+      "startByte": 6,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 2,
+      "bits": 2,
+      "factor": 1.0,
+      "offset": 0.0,
+      "description": "только дизель",
+      "message": "TORQUE_AT_CANHS_RNr_02"
+    },
+    {
+      "target": "GearLeverPosition",
+      "type": "value",
+      "startByte": 6,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 4,
+      "bits": 4,
+      "factor": 1.0,
+      "offset": 0.0,
+      "description": "15=нет данных,14=5-я,13=7-я,12=6-я,11=ручной,3=drive,2=нейтраль,1=реверс,0=паркинг",
+      "message": "TORQUE_AT_CANHS_RNr_02"
+    },
+    {
+      "target": "AT_MILRequest",
+      "type": "value",
+      "startByte": 5,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 3,
+      "bits": 3,
+      "factor": 1.0,
+      "offset": 0.0,
+      "description": "1=запрос MIL,0=нет запроса",
+      "message": "TORQUE_AT_CANHS_RNr_02"
+    },
+    {
+      "target": "AT_TorqueLosses",
+      "type": "value",
+      "startByte": 4,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 0,
+      "bits": 8,
+      "factor": 0.5,
+      "offset": 0.0,
+      "unit": "Nm",
+      "description": "255=нет данных",
+      "message": "TORQUE_AT_CANHS_RNr_02"
+    },
+    {
+      "target": "AT_Minimum_IdleSpeedRequest",
+      "type": "value",
+      "startByte": 2,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 0,
+      "bits": 8,
+      "factor": 8.0,
+      "offset": 0.0,
+      "unit": "rpm",
+      "description": "255=система не готова",
+      "message": "TORQUE_AT_CANHS_RNr_02"
+    },
+    {
+      "target": "InputShaftRevolution",
+      "type": "value",
+      "startByte": 0,
+      "byteCount": 2,
+      "endian": "big",
+      "shift": 0,
+      "bits": 16,
+      "factor": 1.0,
+      "offset": 0.0,
+      "unit": "rpm",
+      "description": "65535=нет данных",
+      "message": "TORQUE_AT_CANHS_RNr_02"
+    },
+    {
+      "target": "CrankingAuthorisation_AT",
+      "type": "value",
+      "startByte": 5,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 6,
+      "bits": 2,
+      "factor": 1.0,
+      "offset": 0.0,
+      "description": "1=кранкинг разрешён,0=запрещён",
+      "message": "TORQUE_AT_CANHS_RNr_02"
+    }
+  ],
+  "0x186": [
+    {
+      "target": "SlipControlRequest",
+      "type": "value",
+      "startByte": 6,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 0,
+      "bits": 2,
+      "factor": 1.0,
+      "offset": 0.0,
+      "description": "только дизель",
+      "message": "TORQUE_ECM_CANHS_RNr_01"
+    },
+    {
+      "target": "ECM_TorqueRequestStatus",
+      "type": "value",
+      "startByte": 6,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 3,
+      "bits": 2,
+      "factor": 1.0,
+      "offset": 0.0,
+      "description": "3=запрос невозможен,2=переходный,1=невозможно точно,0=норма",
+      "message": "TORQUE_ECM_CANHS_RNr_01"
+    },
+    {
+      "target": "RawSensor",
+      "type": "value",
+      "startByte": 5,
+      "byteCount": 2,
+      "endian": "big",
+      "shift": 6,
+      "bits": 10,
+      "factor": 0.125,
+      "offset": 0.0,
+      "unit": "%",
+      "description": "1023=нет данных; положение педали газа",
+      "message": "TORQUE_ECM_CANHS_RNr_01"
+    },
+    {
+      "target": "MeanEffectiveTorque",
+      "type": "value",
+      "startByte": 2,
+      "byteCount": 2,
+      "endian": "big",
+      "shift": 4,
+      "bits": 12,
+      "factor": 0.5,
+      "offset": -400.0,
+      "unit": "Nm",
+      "description": "4095=нет данных",
+      "message": "TORQUE_ECM_CANHS_RNr_01"
+    },
+    {
+      "target": "RequestedTorqueAfterProc",
+      "type": "value",
+      "startByte": 3,
+      "byteCount": 2,
+      "endian": "big",
+      "shift": 0,
+      "bits": 12,
+      "factor": 0.5,
+      "offset": -400.0,
+      "unit": "Nm",
+      "description": "4095=нет данных",
+      "message": "TORQUE_ECM_CANHS_RNr_01"
+    },
+    {
+      "target": "EngineRPM",
+      "type": "value",
+      "startByte": 0,
+      "byteCount": 2,
+      "endian": "big",
+      "shift": 0,
+      "bits": 16,
+      "factor": 0.125,
+      "offset": 0.0,
+      "unit": "Tr/min",
+      "description": "65535=нет данных",
+      "message": "TORQUE_ECM_CANHS_RNr_01"
+    }
+  ],
+  "0x189": [
+    {
+      "target": "AtmosphericPressure",
+      "type": "value",
+      "startByte": 5,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 0,
+      "bits": 8,
+      "factor": 2.0,
+      "offset": 600.0,
+      "unit": "hPa",
+      "description": "255=нет данных",
+      "message": "TORQUE_ECM_CANHS_R_01"
+    },
+    {
+      "target": "MinimumInstantTorque",
+      "type": "value",
+      "startByte": 1,
+      "byteCount": 2,
+      "endian": "big",
+      "shift": 0,
+      "bits": 12,
+      "factor": 0.5,
+      "offset": -400.0,
+      "unit": "Nm",
+      "description": "4095=нет данных",
+      "message": "TORQUE_ECM_CANHS_R_01"
+    },
+    {
+      "target": "MaximumInstantTorque",
+      "type": "value",
+      "startByte": 3,
+      "byteCount": 2,
+      "endian": "big",
+      "shift": 4,
+      "bits": 12,
+      "factor": 0.5,
+      "offset": -400.0,
+      "unit": "Nm",
+      "description": "4095=нет данных",
+      "message": "TORQUE_ECM_CANHS_R_01"
+    },
+    {
+      "target": "EngineTorque_WithoutTMReq",
+      "type": "value",
+      "startByte": 0,
+      "byteCount": 2,
+      "endian": "big",
+      "shift": 4,
+      "bits": 12,
+      "factor": 0.5,
+      "offset": -400.0,
+      "unit": "Nm",
+      "description": "4095=нет данных",
+      "message": "TORQUE_ECM_CANHS_R_01"
+    }
+  ],
+  "0x18a": [
+    {
+      "target": "ECM_StartStopStatus",
+      "type": "value",
+      "startByte": 5,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 2,
+      "bits": 4,
+      "factor": 1.0,
+      "offset": 0.0,
+      "description": "15=нет данных,2=двигатель работает,1=Start-Stop не активирован",
+      "message": "TORQUE_ECM_CANHS_RNr_02"
+    },
+    {
+      "target": "KickDownActivated",
+      "type": "flag",
+      "byte": 3,
+      "bit": 5,
+      "description": "1=кикдаун активирован,0=выкл",
+      "message": "TORQUE_ECM_CANHS_RNr_02"
+    },
+    {
+      "target": "PowerTrainSetPoint",
+      "type": "value",
+      "startByte": 2,
+      "byteCount": 2,
+      "endian": "big",
+      "shift": 6,
+      "bits": 10,
+      "factor": 0.125,
+      "offset": 0.0,
+      "unit": "%",
+      "description": "1023=нет данных",
+      "message": "TORQUE_ECM_CANHS_RNr_02"
+    },
+    {
+      "target": "CruiseControlStatus_forTM",
+      "type": "value",
+      "startByte": 1,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 1,
+      "bits": 2,
+      "factor": 1.0,
+      "offset": 0.0,
+      "description": "2=CC/SL активен,1=восстановление педали,0=неактивен",
+      "message": "TORQUE_ECM_CANHS_RNr_02"
+    },
+    {
+      "target": "AT_TorqueAcknowledgement",
+      "type": "flag",
+      "byte": 1,
+      "bit": 3,
+      "description": "1=данные согласованы,0=нет",
+      "message": "TORQUE_ECM_CANHS_RNr_02"
+    },
+    {
+      "target": "RawEngineTorque_WithoutTMReq",
+      "type": "value",
+      "startByte": 0,
+      "byteCount": 2,
+      "endian": "big",
+      "shift": 4,
+      "bits": 12,
+      "factor": 0.5,
+      "offset": -400.0,
+      "unit": "Nm",
+      "description": "4095=нет данных",
+      "message": "TORQUE_ECM_CANHS_RNr_02"
+    }
+  ],
+  "0x1aa": [
+    {
+      "target": "CouplerState",
+      "type": "value",
+      "startByte": 3,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 0,
+      "bits": 2,
+      "factor": 1.0,
+      "offset": 0.0,
+      "description": "3=нет данных,2=закрыта,1=скольжение,0=открыта",
+      "message": "ETC_CANHS_R_01"
+    },
+    {
+      "target": "ETCModeCustomerRequest",
+      "type": "value",
+      "startByte": 3,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 2,
+      "bits": 2,
+      "factor": 1.0,
+      "offset": 0.0,
+      "description": "3=нет данных,2=ForTwo,1=Lock,0=Auto",
+      "message": "ETC_CANHS_R_01"
+    }
+  ],
+  "0x1f6": [
+    {
+      "target": "EngineStopRequestOrigine",
+      "type": "value",
+      "startByte": 1,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 0,
+      "bits": 4,
+      "factor": 1.0,
+      "offset": 0.0,
+      "description": "4=аварийный запрос,3=нет запроса,2=от водителя,1=от системы,0=др.причина",
+      "message": "ECM_CANHS_RNr_01"
+    },
+    {
+      "target": "EngineStatus_R",
+      "type": "value",
+      "startByte": 1,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 4,
+      "bits": 2,
+      "factor": 1.0,
+      "offset": 0.0,
+      "description": "3=работает(тяга),2=работает(автономно),1=резерв,0=заглушен",
+      "message": "ECM_CANHS_RNr_01"
+    }
+  ],
+  "0x20c": [
+    {
+      "target": "CreepingStatus",
+      "type": "value",
+      "startByte": 7,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 6,
+      "bits": 2,
+      "factor": 1.0,
+      "offset": 0.0,
+      "description": "3=не исп.,2=креп неактивен,1=креп активен,0=нет данных",
+      "message": "TORQUE_AT_CANHS_R_02"
+    },
+    {
+      "target": "AT_AnticipatedTorqueDownRequest",
+      "type": "flag",
+      "byte": 7,
+      "bit": 4,
+      "description": "1=запрошено,0=нет",
+      "message": "TORQUE_AT_CANHS_R_02"
+    },
+    {
+      "target": "SmoothTakeOffRequest",
+      "type": "value",
+      "startByte": 3,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 3,
+      "bits": 2,
+      "factor": 1.0,
+      "offset": 0.0,
+      "description": "3=не исп.,2=нет данных,1=не запрошено,0=запрошено",
+      "message": "TORQUE_AT_CANHS_R_02"
+    },
+    {
+      "target": "AT_StartStopRequest",
+      "type": "value",
+      "startByte": 3,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 5,
+      "bits": 3,
+      "factor": 1.0,
+      "offset": 0.0,
+      "description": "3=запрет останова,2=запрос пуска,1=запрет останова,0=нет запроса",
+      "message": "TORQUE_AT_CANHS_R_02"
+    },
+    {
+      "target": "AT_StartStopFailureFlag",
+      "type": "flag",
+      "byte": 2,
+      "bit": 0,
+      "description": "1=сбой Start-Stop,0=нет сбоя",
+      "message": "TORQUE_AT_CANHS_R_02"
+    },
+    {
+      "target": "AT_StartStopMode",
+      "type": "value",
+      "startByte": 2,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 1,
+      "bits": 3,
+      "factor": 1.0,
+      "offset": 0.0,
+      "description": "7=заглох,6=остановлен,5=кранкинг,1=норма,0=нет данных",
+      "message": "TORQUE_AT_CANHS_R_02"
+    },
+    {
+      "target": "ImpulsionalShiftRequest",
+      "type": "value",
+      "startByte": 0,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 1,
+      "bits": 2,
+      "factor": 1.0,
+      "offset": 0.0,
+      "description": "3=нет данных,2=вниз,1=вверх,0=нет запроса",
+      "message": "TORQUE_AT_CANHS_R_02"
+    }
+  ],
+  "0x242": [
+    {
+      "target": "HSA_ActivationState",
+      "type": "value",
+      "startByte": 6,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 0,
+      "bits": 2,
+      "factor": 1.0,
+      "offset": 0.0,
+      "description": "2=HSA активна,1=неактивна,0=нет данных",
+      "message": "BRAKE_CANHS_RNr_01"
+    },
+    {
+      "target": "ShiftingAuthorization",
+      "type": "value",
+      "startByte": 6,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 2,
+      "bits": 2,
+      "factor": 1.0,
+      "offset": 0.0,
+      "description": "3=вверх/вниз разрешено,2=вверх,1=вниз,0=запрещено",
+      "message": "BRAKE_CANHS_RNr_01"
+    },
+    {
+      "target": "AYCMalfunction",
+      "type": "flag",
+      "byte": 0,
+      "bit": 1,
+      "description": "1=неисправность AYC,0=нет",
+      "message": "BRAKE_CANHS_RNr_01"
+    },
+    {
+      "target": "AYCinRegulation",
+      "type": "flag",
+      "byte": 0,
+      "bit": 2,
+      "description": "1=AYC в регулировке,0=нет",
+      "message": "BRAKE_CANHS_RNr_01"
+    },
+    {
+      "target": "ASRinRegulation",
+      "type": "flag",
+      "byte": 0,
+      "bit": 5,
+      "description": "1=ASR в регулировке,0=нет",
+      "message": "BRAKE_CANHS_RNr_01"
+    },
+    {
+      "target": "ESP_TorqueControlType",
+      "type": "value",
+      "startByte": 1,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 0,
+      "bits": 3,
+      "factor": 1.0,
+      "offset": 0.0,
+      "description": "6=MSR(увел.момент),5=ASR(умен.момент),0=нет запроса",
+      "message": "BRAKE_CANHS_RNr_01"
+    },
+    {
+      "target": "MSRinRegulation",
+      "type": "flag",
+      "byte": 0,
+      "bit": 0,
+      "description": "1=MSR в регулировке,0=нет",
+      "message": "BRAKE_CANHS_RNr_01"
+    },
+    {
+      "target": "ABSMalfunction",
+      "type": "flag",
+      "byte": 0,
+      "bit": 6,
+      "description": "1=неисправность ABS,0=нет",
+      "message": "BRAKE_CANHS_RNr_01"
+    },
+    {
+      "target": "ABSinRegulation",
+      "type": "flag",
+      "byte": 0,
+      "bit": 7,
+      "description": "1=ABS в регулировке,0=нет",
+      "message": "BRAKE_CANHS_RNr_01"
+    }
+  ],
+  "0x29a": [
+    {
+      "target": "VehicleSpeed",
+      "type": "value",
+      "startByte": 4,
+      "byteCount": 2,
+      "endian": "big",
+      "shift": 0,
+      "bits": 16,
+      "factor": 0.01,
+      "offset": 0.0,
+      "unit": "km/h",
+      "description": "65535=нет данных",
+      "message": "BRAKE_CANHS_RNr_02"
+    },
+    {
+      "target": "WheelSpeed_F_L",
+      "type": "value",
+      "startByte": 2,
+      "byteCount": 2,
+      "endian": "big",
+      "shift": 0,
+      "bits": 16,
+      "factor": 0.0417,
+      "offset": 0.0,
+      "unit": "rpm",
+      "description": "65535=нет данных",
+      "message": "BRAKE_CANHS_RNr_02"
+    },
+    {
+      "target": "WheelSpeed_F_R",
+      "type": "value",
+      "startByte": 0,
+      "byteCount": 2,
+      "endian": "big",
+      "shift": 0,
+      "bits": 16,
+      "factor": 0.0417,
+      "offset": 0.0,
+      "unit": "rpm",
+      "description": "65535=нет данных",
+      "message": "BRAKE_CANHS_RNr_02"
+    }
+  ],
+  "0x29c": [
+    {
+      "target": "WheelSpeed_R_R",
+      "type": "value",
+      "startByte": 2,
+      "byteCount": 2,
+      "endian": "big",
+      "shift": 0,
+      "bits": 16,
+      "factor": 0.0417,
+      "offset": 0.0,
+      "unit": "rpm",
+      "description": "65535=нет данных",
+      "message": "BRAKE_CANHS_RNr_03"
+    },
+    {
+      "target": "WheelSpeed_R_L",
+      "type": "value",
+      "startByte": 0,
+      "byteCount": 2,
+      "endian": "big",
+      "shift": 0,
+      "bits": 16,
+      "factor": 0.0417,
+      "offset": 0.0,
+      "unit": "rpm",
+      "description": "65535=нет данных",
+      "message": "BRAKE_CANHS_RNr_03"
+    }
+  ],
+  "0x2a9": [
+    {
+      "target": "EngineRefiringSpeedTarget",
+      "type": "value",
+      "startByte": 0,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 0,
+      "bits": 8,
+      "factor": 10.0,
+      "offset": 250.0,
+      "unit": "rpm",
+      "description": "255=нет данных",
+      "message": "ECM_CANHS_R_08"
+    }
+  ],
+  "0x2c2": [
+    {
+      "target": "CRC",
+      "type": "value",
+      "startByte": 1,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 0,
+      "bits": 8,
+      "factor": 1.0,
+      "offset": 0.0,
+      "description": "контрольная сумма J1850",
+      "message": "TORQUE_AT_CANHS_R_03"
+    },
+    {
+      "target": "Clock",
+      "type": "value",
+      "startByte": 0,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 0,
+      "bits": 4,
+      "factor": 1.0,
+      "offset": 0.0,
+      "description": "счётчик кадра 0-15",
+      "message": "TORQUE_AT_CANHS_R_03"
+    },
+    {
+      "target": "AT_RESAuthorization",
+      "type": "value",
+      "startByte": 0,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 5,
+      "bits": 3,
+      "factor": 1.0,
+      "offset": 0.0,
+      "description": "7=стоп кранкинга,4=кранкинг разрешён,1=запрещён,0=нет данных",
+      "message": "TORQUE_AT_CANHS_R_03"
+    }
+  ],
+  "0x2c6": [
+    {
+      "target": "DistanceTotalizerGearBox",
+      "type": "value",
+      "startByte": 2,
+      "byteCount": 4,
+      "endian": "big",
+      "shift": 4,
+      "bits": 28,
+      "factor": 0.01,
+      "offset": 0.0,
+      "unit": "km",
+      "description": "268435455=нет данных",
+      "message": "HALMO_CANHS_R_01"
+    },
+    {
+      "target": "VehicleSpeedGearBox",
+      "type": "value",
+      "startByte": 0,
+      "byteCount": 2,
+      "endian": "big",
+      "shift": 0,
+      "bits": 16,
+      "factor": 0.01,
+      "offset": 0.0,
+      "unit": "km/h",
+      "description": "65535=нет данных",
+      "message": "HALMO_CANHS_R_01"
+    }
+  ],
+  "0x350": [
+    {
+      "target": "EcoModeRequest",
+      "type": "value",
+      "startByte": 7,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 6,
+      "bits": 2,
+      "factor": 1.0,
+      "offset": 0.0,
+      "description": "2=не запрошен,1=запрошен,0=нет данных",
+      "message": "BCM_CANHS_R_04"
+    },
+    {
+      "target": "DriverDoorState",
+      "type": "value",
+      "startByte": 6,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 4,
+      "bits": 2,
+      "factor": 1.0,
+      "offset": 0.0,
+      "description": "3=не исп.,2=открыта,1=закрыта,0=нет данных",
+      "message": "BCM_CANHS_R_04"
+    },
+    {
+      "target": "GenericApplicativeDiagEnable",
+      "type": "value",
+      "startByte": 5,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 2,
+      "bits": 2,
+      "factor": 1.0,
+      "offset": 0.0,
+      "description": "2=все алерты вкл,1=часть алертов,0=только критичные",
+      "message": "BCM_CANHS_R_04"
+    },
+    {
+      "target": "BrakeInfoStatus",
+      "type": "value",
+      "startByte": 5,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 4,
+      "bits": 3,
+      "factor": 1.0,
+      "offset": 0.0,
+      "description": "4=педаль подтверждена,2=педаль нажата,1=не нажата",
+      "message": "BCM_CANHS_R_04"
+    },
+    {
+      "target": "DiagMuxOn_BCM",
+      "type": "flag",
+      "byte": 5,
+      "bit": 7,
+      "description": "1=сбои не замаскированы,0=замаскированы",
+      "message": "BCM_CANHS_R_04"
+    },
+    {
+      "target": "AbsoluteTimeSince1rstIgnition",
+      "type": "value",
+      "startByte": 1,
+      "byteCount": 3,
+      "endian": "big",
+      "shift": 0,
+      "bits": 24,
+      "factor": 1.0,
+      "offset": 0.0,
+      "unit": "mn",
+      "description": "16777215=нет данных",
+      "message": "BCM_CANHS_R_04"
+    },
+    {
+      "target": "VehicleStateExtented",
+      "type": "value",
+      "startByte": 0,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 0,
+      "bits": 4,
+      "factor": 1.0,
+      "offset": 0.0,
+      "description": "9=стоп двиг.,8=автостарт,7=работает,6=запуск,5=зажигание,4=аксессуары,1=пробуждение,0=сон",
+      "message": "BCM_CANHS_R_04"
+    }
+  ],
+  "0x352": [
+    {
+      "target": "BrakingPressure",
+      "type": "value",
+      "startByte": 3,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 0,
+      "bits": 8,
+      "factor": 0.5,
+      "offset": 0.0,
+      "unit": "bar",
+      "description": "255=нет данных,254=тест датчика,253=насыщение(>126бар)",
+      "message": "BRAKE_CANHS_R_02"
+    }
+  ],
+  "0x3b7": [
+    {
+      "target": "ExternalTemp",
+      "type": "value",
+      "startByte": 0,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 0,
+      "bits": 8,
+      "factor": 1.0,
+      "offset": -40.0,
+      "unit": "°C",
+      "description": "255=нет данных; отправитель — CLUSTER",
+      "message": "CLUSTER_CANHS_R_04"
+    }
+  ],
+  "0x3f7": [
+    {
+      "target": "FullLoad",
+      "type": "flag",
+      "byte": 1,
+      "bit": 0,
+      "description": "1=полная нагрузка,0=нет",
+      "message": "MMI_AT_CANHS_RNr_01"
+    },
+    {
+      "target": "AT_Level2FailureDisplayRequest",
+      "type": "value",
+      "startByte": 2,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 2,
+      "bits": 2,
+      "factor": 1.0,
+      "offset": 0.0,
+      "description": "3=защита активна,2=серьёзный сбой,1=нет предупр.,0=не исп.",
+      "message": "MMI_AT_CANHS_RNr_01"
+    },
+    {
+      "target": "ClutchOverheatingIncreasing_Warn",
+      "type": "flag",
+      "byte": 2,
+      "bit": 4,
+      "description": "1=перегрев сцепления,0=нет",
+      "message": "MMI_AT_CANHS_RNr_01"
+    },
+    {
+      "target": "AT_OpenDoorWarningDisplayRequest",
+      "type": "value",
+      "startByte": 2,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 5,
+      "bits": 3,
+      "factor": 1.0,
+      "offset": 0.0,
+      "description": "5=RGB дверь,3=AGB дверь,0=нет предупр.",
+      "message": "MMI_AT_CANHS_RNr_01"
+    },
+    {
+      "target": "AT_GearShiftRefused",
+      "type": "flag",
+      "byte": 1,
+      "bit": 3,
+      "description": "1=отказ переключения,0=принято",
+      "message": "MMI_AT_CANHS_RNr_01"
+    },
+    {
+      "target": "AT_PressBrakePedalRequest",
+      "type": "flag",
+      "byte": 1,
+      "bit": 4,
+      "description": "1=нажмите тормоз,0=нет запроса",
+      "message": "MMI_AT_CANHS_RNr_01"
+    },
+    {
+      "target": "ATSnowmodeRequest",
+      "type": "flag",
+      "byte": 1,
+      "bit": 6,
+      "description": "1=режим снег,0=нет",
+      "message": "MMI_AT_CANHS_RNr_01"
+    },
+    {
+      "target": "ATCVT_HiTempWarning",
+      "type": "flag",
+      "byte": 0,
+      "bit": 1,
+      "description": "1=перегрев AT/CVT,0=нет",
+      "message": "MMI_AT_CANHS_RNr_01"
+    },
+    {
+      "target": "ATCVT_CheckWarning",
+      "type": "flag",
+      "byte": 0,
+      "bit": 2,
+      "description": "1=неисправность AT/CVT,0=нет",
+      "message": "MMI_AT_CANHS_RNr_01"
+    },
+    {
+      "target": "ATCVT_RangeIndication",
+      "type": "value",
+      "startByte": 0,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 3,
+      "bits": 5,
+      "factor": 1.0,
+      "offset": 0.0,
+      "description": "0=OFF...31=Auto8 (полная раскладка P/R/N/D/S/L/B/1-8/M1-8/Auto1-8)",
+      "message": "MMI_AT_CANHS_RNr_01"
+    }
+  ],
+  "0x41d": [
+    {
+      "target": "EngineWarmUpPhase",
+      "type": "flag",
+      "byte": 1,
+      "bit": 0,
+      "description": "1=прогрев,0=не в прогреве",
+      "message": "ECM_CANHS_R_07"
+    }
+  ],
+  "0x4ad": [
+    {
+      "target": "DifferentialTorqueCalculated",
+      "type": "value",
+      "startByte": 1,
+      "byteCount": 2,
+      "endian": "big",
+      "shift": 0,
+      "bits": 16,
+      "factor": 0.5,
+      "offset": -16384.0,
+      "unit": "Nm",
+      "description": "65535=нет данных",
+      "message": "AT_CANHS_R_01"
+    }
+  ],
+  "0x4f8": [
+    {
+      "target": "HandBrakeSwitch",
+      "type": "value",
+      "startByte": 0,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 2,
+      "bits": 2,
+      "factor": 1.0,
+      "offset": 0.0,
+      "description": "3=нет данных,2=затянут,1=отпущен,0=не исп.; отправитель — CLUSTER",
+      "message": "CLUSTER_CANHS_RNr_01"
+    }
+  ],
+  "0x5d7": [
+    {
+      "target": "DistanceTotalizer",
+      "type": "value",
+      "startByte": 2,
+      "byteCount": 4,
+      "endian": "big",
+      "shift": 4,
+      "bits": 28,
+      "factor": 0.01,
+      "offset": 0.0,
+      "unit": "km",
+      "description": "268435455=нет данных",
+      "message": "BRAKE_CANHS_R_01"
+    }
+  ],
+  "0x5da": [
+    {
+      "target": "EngOverSpeedCutOffThreshold",
+      "type": "flag",
+      "byte": 7,
+      "bit": 5,
+      "description": "1=высокий порог,0=низкий",
+      "message": "ECM_CANHS_RNr_02"
+    },
+    {
+      "target": "MaxEngineSpeedRequest",
+      "type": "value",
+      "startByte": 4,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 0,
+      "bits": 8,
+      "factor": 32.0,
+      "offset": 0.0,
+      "unit": "rpm",
+      "description": "255=нет данных",
+      "message": "ECM_CANHS_RNr_02"
+    },
+    {
+      "target": "ECM_MechanicalLoadRequest",
+      "type": "flag",
+      "byte": 2,
+      "bit": 1,
+      "description": "1=запрошена мех.нагрузка,0=нет",
+      "message": "ECM_CANHS_RNr_02"
+    },
+    {
+      "target": "IdleSpeedControlInternalRequest",
+      "type": "value",
+      "startByte": 1,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 0,
+      "bits": 8,
+      "factor": 8.0,
+      "offset": 0.0,
+      "unit": "tr/mn",
+      "description": "255=нет данных",
+      "message": "ECM_CANHS_RNr_02"
+    },
+    {
+      "target": "EngineCoolantTemp",
+      "type": "value",
+      "startByte": 0,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 0,
+      "bits": 8,
+      "factor": 1.0,
+      "offset": -40.0,
+      "unit": "°C",
+      "description": "255=нет данных",
+      "message": "ECM_CANHS_RNr_02"
+    }
+  ],
+  "0x65c": [
+    {
+      "target": "AlternatorLoad_ECM",
+      "type": "value",
+      "startByte": 1,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 0,
+      "bits": 8,
+      "factor": 0.390625,
+      "offset": 0.0,
+      "unit": "%",
+      "description": "255=нет данных",
+      "message": "ECM_CANHS_R_04"
+    },
+    {
+      "target": "EngineAirTemp",
+      "type": "value",
+      "startByte": 0,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 1,
+      "bits": 7,
+      "factor": 1.0,
+      "offset": -40.0,
+      "unit": "°C",
+      "description": "127=нет данных",
+      "message": "ECM_CANHS_R_04"
+    }
+  ],
+  "0x66a": [
+    {
+      "target": "RequestedSpeedDisplayRequest",
+      "type": "value",
+      "startByte": 1,
+      "byteCount": 1,
+      "endian": "big",
+      "shift": 0,
+      "bits": 8,
+      "factor": 1.0,
+      "offset": 0.0,
+      "description": "255=сбой CC/SL,254=выкл/ожидание",
+      "message": "MMI_ECM_CANHS_RNr_01"
+    }
+  ],
+  "0x7df": [
+    {
+      "target": "DTOOL_to_ALLUCEOBD",
+      "type": "value",
+      "startByte": -7,
+      "byteCount": 8,
+      "endian": "big",
+      "shift": 0,
+      "bits": 64,
+      "factor": 1.0,
+      "offset": 0.0,
+      "description": "диагностический passthrough",
+      "message": "DTOOL_to_ALLUCEOBD"
+    }
+  ],
+  "0x7e1": [
+    {
+      "target": "DTOOL_to_AT",
+      "type": "value",
+      "startByte": -7,
+      "byteCount": 8,
+      "endian": "big",
+      "shift": 0,
+      "bits": 64,
+      "factor": 1.0,
+      "offset": 0.0,
+      "description": "диагностический passthrough",
+      "message": "DTOOL_to_AT"
+    }
+  ],
+  "0x7e9": [
+    {
+      "target": "AT_to_DTOOL",
+      "type": "value",
+      "startByte": -7,
+      "byteCount": 8,
+      "endian": "big",
+      "shift": 0,
+      "bits": 64,
+      "factor": 1.0,
+      "offset": 0.0,
+      "description": "диагностический passthrough",
+      "message": "AT_to_DTOOL"
+    }
+  ]
+}

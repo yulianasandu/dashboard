@@ -12,7 +12,6 @@ qt_add_executable(appdashboard
     main.cpp
     carcontroller.cpp
     carcontroller.h
-    canreceiver.cpp
 )
 
 qt_add_qml_module(appdashboard
@@ -22,17 +21,28 @@ qt_add_qml_module(appdashboard
         Main.qml
 
     RESOURCES
-        icons/oil.png
-        icons/engine.png
-        icons/battery.png
-        icons/low_beam.png
-        icons/high_beam.png
-        icons/yellow_fuel.png
-        icons/temp.png
+        icons/oil_pressure.svg
+        icons/check_engine.svg
+        icons/battery.svg
+        icons/low_beam.svg
+        icons/high_beam.svg
+        icons/coolant_temp.svg
         icons/fog_front.svg
         icons/turn_left.svg
         icons/turn_right.svg
         icons/side_lamps.svg
+        icons/fog_rear.svg
+        icons/fuel_low.svg
+        icons/fuel.svg
+        icons/abs.svg
+        icons/brake_system.svg
+        icons/esc_off.svg
+        icons/trunk_open.svg
+        icons/power_steering.svg
+        icons/hood_open.svg
+        icons/seatbelt.svg
+        icons/door_open.svg
+        icons/master_warning.svg
 
         fonts/eurostile.ttf
         SOURCES canreceiver.h canreceiver.cpp

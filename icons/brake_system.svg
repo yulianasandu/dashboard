@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Тормозная система (Ручник) — Фон удален, перекрашено в красный (#ff0000) и подогнано под сетку 100x80 -->
+<svg 
+ id="svg_brake_system"
+ width="100" 
+ height="80" 
+ viewBox="0 0 166.4 130.82" 
+ version="1.1" 
+ xmlns="http://www.w3.org/2000/svg">
+ 
+ <g fill="none" stroke="#ff0000">
+   <!-- Центральный круг -->
+   <circle cx="83.761" cy="65.847" r="56.599" stroke-linecap="square" stroke-width="9.3566"/>
+   <!-- Боковые полукруглые тормозные колодки -->
+   <path d="m138.36 16.447c28.8 28.8 22.4 73.599-1.6 100.8m-108-101.6c-28 32.799-24.8 71.199 1.6 100.8" stroke-linecap="square" stroke-width="9.3731"/>
+   <!-- Верхняя палочка восклицательного знака -->
+   <path d="m83.2 36v35.2" stroke-linecap="round" stroke-width="12.285"/>
+ </g>
+ 
+ <!-- Нижняя точка восклицательного знака -->
+ <ellipse cx="82.8" cy="94.4" rx="6.8" ry="6.4" fill="#ff0000"/>
+</svg>

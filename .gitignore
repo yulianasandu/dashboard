@@ -80,3 +80,4 @@ CMakeLists.txt.user*
 .rcc/
 .uic/
 /build*/
+esp/esp_code1/build/

@@ -1,105 +1,175 @@
 #include "canreceiver.h"
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QDebug>
-#include <QtConcurrent/QtConcurrent>
+#include <QThread>
 
-CanReceiver::CanReceiver(QObject *parent) : QObject(parent)
+CanReceiver::CanReceiver(QObject *parent)
+    : QObject(parent)
 {
-    // Запускаем опрос порта в фоновом режиме, чтобы QML-интерфейс не тормозил
-    QtConcurrent::run([this]() {
-        this->listenPort();
-    });
+    QThread *thread = QThread::create([this]()
+                                      {
+                                          listenPort();
+                                      });
+    thread->start();
 }
 
 CanReceiver::~CanReceiver()
 {
-    m_running = false;
-    if (hSerial != INVALID_HANDLE_VALUE) {
+    m_running=false;
+    if(hSerial != INVALID_HANDLE_VALUE)
         CloseHandle(hSerial);
-    }
 }
 
 void CanReceiver::listenPort()
 {
-    // 1. Сначала пробуем открыть конкретно COM5, так как мы точно знаем, что ESP32 там
-    std::string targetPort = "\\\\.\\COM5";
-    hSerial = CreateFileA(targetPort.c_str(), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-
-    // 2. Если вдруг порт изменился, перебираем порты от 10 до 2 (пропускаем системный COM1)
-    if (hSerial == INVALID_HANDLE_VALUE) {
-        for (int i = 10; i >= 2; --i) {
-            std::string portName = "\\\\.\\COM" + std::to_string(i);
-            hSerial = CreateFileA(portName.c_str(), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-            if (hSerial != INVALID_HANDLE_VALUE) {
-                qDebug() << "ESP32 успешно найдена на порту: COM" << i;
-                break;
-            }
-        }
-    } else {
-        qDebug() << "ESP32 успешно найдена на приоритетном порту: COM5";
-    }
-
-    if (hSerial == INVALID_HANDLE_VALUE) {
-        qWarning() << "Плата ESP32 не обнаружена ни на одном рабочем COM-порту!";
+    std::string port="\\\\.\\COM5";
+    hSerial = CreateFileA(
+        port.c_str(),
+        GENERIC_READ,
+        0,
+        NULL,
+        OPEN_EXISTING,
+        0,
+        NULL);
+    if(hSerial==INVALID_HANDLE_VALUE)
+    {
+        qWarning()<<"ESP32 не найдена";
         return;
     }
-
-    // Настройка параметров порта (115200 бод, как в прошивке)
-    DCB dcbSerialParams = { 0 };
-    dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
-    GetCommState(hSerial, &dcbSerialParams);
-    dcbSerialParams.BaudRate = CBR_115200;
-    dcbSerialParams.ByteSize = 8;
-    dcbSerialParams.StopBits = ONESTOPBIT;
-    dcbSerialParams.Parity = NOPARITY;
-    SetCommState(hSerial, &dcbSerialParams);
-
-    char szBuff[256];
-    DWORD dwBytesRead = 0;
-
-    while (m_running) {
-        if (ReadFile(hSerial, szBuff, sizeof(szBuff) - 1, &dwBytesRead, NULL) && dwBytesRead > 0) {
-            szBuff[dwBytesRead] = '\0';
-            m_buffer += szBuff;
-
-            // Обработка строк по символу переноса '\n'
+    DCB dcb={0};
+    dcb.DCBlength=sizeof(dcb);
+    GetCommState(hSerial,&dcb);
+    dcb.BaudRate=CBR_115200;
+    dcb.ByteSize=8;
+    dcb.StopBits=ONESTOPBIT;
+    dcb.Parity=NOPARITY;
+    SetCommState(hSerial,&dcb);
+    char buffer[256];
+    DWORD read;
+    while(m_running)
+    {
+        if(ReadFile(
+                hSerial,
+                buffer,
+                sizeof(buffer)-1,
+                &read,
+                NULL)
+            &&
+            read>0)
+        {
+            buffer[read]=0;
+            m_buffer+=buffer;
             size_t pos;
-            while ((pos = m_buffer.find('\n')) != std::string::npos) {
-                std::string line = m_buffer.substr(0, pos);
-                m_buffer.erase(0, pos + 1);
-
-                // Переводим стандартную строку в QByteArray для парсинга JSON в Qt
-                QJsonDocument doc = QJsonDocument::fromJson(QByteArray::fromStdString(line));
-                if (!doc.isNull() && doc.isObject()) {
-                    QJsonObject obj = doc.object();
-
-                    // Обновляем данные интерфейса
-                    if (obj.contains("rpm")) {
-                        double val = obj["rpm"].toDouble();
-                        if (m_rpm != val) { m_rpm = val; emit rpmChanged(); }
-                    }
-                    if (obj.contains("speed")) {
-                        double val = obj["speed"].toDouble();
-                        if (m_speed != val) { m_speed = val; emit speedChanged(); }
-                    }
-                    if (obj.contains("gear")) {
-                        int val = obj["gear"].toInt();
-                        if (m_gear != val) { m_gear = val; emit gearChanged(); }
-                    }
-                    if (obj.contains("coolant")) {
-                        double val = obj["coolant"].toDouble();
-                        if (m_coolant != val) { m_coolant = val; emit coolantChanged(); }
-                    }
-                    if (obj.contains("fuel")) {
-                        double val = obj["fuel"].toDouble();
-                        if (m_fuel != val) { m_fuel = val; emit fuelChanged(); }
-                    }
-                    if (obj.contains("lights")) {
-                        bool val = obj["lights"].toInt() > 0;
-                        if (m_lightWarning != val) { m_lightWarning = val; emit lightWarningChanged(); }
-                    }
-                }
+            while((pos=m_buffer.find('\n'))!=std::string::npos)
+            {
+                std::string line=
+                    m_buffer.substr(0,pos);
+                m_buffer.erase(0,pos+1);
+                processJson(line);
             }
         }
-        Sleep(10); // Небольшая пауза, чтобы не перегружать процессор компьютера
+        Sleep(10);
+    }
+}
+
+void CanReceiver::processJson(const std::string &line)
+{
+    QJsonDocument doc = QJsonDocument::fromJson(QByteArray::fromStdString(line));
+
+    if (!doc.isObject())
+        return;
+
+    QJsonObject obj = doc.object();
+
+    if (obj.contains("rpm")) {
+        double v = obj["rpm"].toDouble();
+        if (v != m_rpm) { m_rpm = v; emit rpmChanged(); }
+    }
+    if (obj.contains("speed")) {
+        double v = obj["speed"].toDouble();
+        if (v != m_speed) { m_speed = v; emit speedChanged(); }
+    }
+    if (obj.contains("coolant")) {
+        double v = obj["coolant"].toDouble();
+        if (v != m_coolant) { m_coolant = v; emit coolantChanged(); }
+    }
+    if (obj.contains("fuel")) {
+        double v = obj["fuel"].toDouble();
+        if (v != m_fuel) { m_fuel = v; emit fuelChanged(); }
+    }
+
+    if (obj.contains("highBeam")) {
+        bool v = obj["highBeam"].toInt() != 0;
+        if (v != m_highBeam) { m_highBeam = v; emit highBeamChanged(); }
+    }
+    if (obj.contains("lowBeam")) {
+        bool v = obj["lowBeam"].toInt() != 0;
+        if (v != m_lowBeam) { m_lowBeam = v; emit lowBeamChanged(); }
+    }
+    if (obj.contains("turnLeft")) {
+        bool v = obj["turnLeft"].toInt() != 0;
+        if (v != m_turnLeft) { m_turnLeft = v; emit turnLeftChanged(); }
+    }
+    if (obj.contains("turnRight")) {
+        bool v = obj["turnRight"].toInt() != 0;
+        if (v != m_turnRight) { m_turnRight = v; emit turnRightChanged(); }
+    }
+
+    if (obj.contains("checkEngine")) {
+        bool v = obj["checkEngine"].toInt() != 0;
+        if (v != m_checkEngine) { m_checkEngine = v; emit checkEngineChanged(); }
+    }
+    if (obj.contains("oilPressure")) {
+        bool v = obj["oilPressure"].toInt() != 0;
+        if (v != m_oilPressure) { m_oilPressure = v; emit oilPressureChanged(); }
+    }
+    if (obj.contains("batteryWarning")) {
+        bool v = obj["batteryWarning"].toInt() != 0;
+        if (v != m_batteryWarning) { m_batteryWarning = v; emit batteryWarningChanged(); }
+    }
+    if (obj.contains("absWarning")) {
+        bool v = obj["absWarning"].toInt() != 0;
+        if (v != m_absWarning) { m_absWarning = v; emit absWarningChanged(); }
+    }
+    if (obj.contains("steeringWarning")) {
+        bool v = obj["steeringWarning"].toInt() != 0;
+        if (v != m_steeringWarning) { m_steeringWarning = v; emit steeringWarningChanged(); }
+    }
+    if (obj.contains("escWarning")) {
+        bool v = obj["escWarning"].toInt() != 0;
+        if (v != m_escWarning) { m_escWarning = v; emit escWarningChanged(); }
+    }
+    if (obj.contains("doorsWarning")) {
+        bool v = obj["doorsWarning"].toInt() != 0;
+        if (v != m_doorsWarning) { m_doorsWarning = v; emit doorsWarningChanged(); }
+    }
+    if (obj.contains("seatbelt")) {
+        bool v = obj["seatbelt"].toInt() != 0;
+        if (v != m_seatbelt) { m_seatbelt = v; emit seatbeltChanged(); }
+    }
+    if (obj.contains("handBrake")) {
+        bool v = obj["handBrake"].toInt() != 0;
+        if (v != m_handBrake) { m_handBrake = v; emit handBrakeChanged(); }
+    }
+    if (obj.contains("position")) {
+        bool v = obj["position"].toInt() != 0;
+        if (v != m_position) { m_position = v; emit positionChanged(); }
+    }
+    if (obj.contains("fogFront")) {
+        bool v = obj["fogFront"].toInt() != 0;
+        if (v != m_fogFront) { m_fogFront = v; emit fogFrontChanged(); }
+    }
+    if (obj.contains("fogRear")) {
+        bool v = obj["fogRear"].toInt() != 0;
+        if (v != m_fogRear) { m_fogRear = v; emit fogRearChanged(); }
+    }
+    if (obj.contains("odometer")) {
+        double v = obj["odometer"].toDouble();
+        if (v != m_odometer) { m_odometer = v; emit odometerChanged(); }
+    }
+    if (obj.contains("gear")) {
+        QString v = obj["gear"].toString();
+        if (v != m_gear) { m_gear = v; emit gearChanged(); }
     }
 }
