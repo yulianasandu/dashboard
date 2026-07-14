@@ -4,7 +4,7 @@ project(dashboard VERSION 0.1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Quick)
+find_package(Qt6 REQUIRED COMPONENTS Quick Network)
 
 qt_standard_project_setup(REQUIRES 6.8)
 
@@ -36,13 +36,19 @@ qt_add_qml_module(appdashboard
         icons/fuel.svg
         icons/abs.svg
         icons/brake_system.svg
-        icons/esc_off.svg
+        icons/esp_off.svg
         icons/trunk_open.svg
         icons/power_steering.svg
         icons/hood_open.svg
         icons/seatbelt.svg
         icons/door_open.svg
         icons/master_warning.svg
+        icons/coolant_overheat.svg
+        icons/auto_hold.svg
+        icons/airbag.svg
+        icons/hand_brake.svg
+        icons/cruise.svg
+        icons/esc_off.svg
 
         fonts/eurostile.ttf
         SOURCES canreceiver.h canreceiver.cpp
@@ -60,7 +66,7 @@ set_target_properties(appdashboard PROPERTIES
 )
 
 target_link_libraries(appdashboard
-    PRIVATE Qt6::Quick
+    PRIVATE Qt6::Quick Qt6::Network
 )
 
 include(GNUInstallDirs)

@@ -14,14 +14,7 @@ CanReceiver::CanReceiver(QObject *parent)
     thread->start();
 }
 
-CanReceiver::~CanReceiver()
-{
-    m_running=false;
-    if(hSerial != INVALID_HANDLE_VALUE)
-        CloseHandle(hSerial);
-}
-
-void CanReceiver::listenPort()
+/*void CanReceiver::listenPort()
 {
     std::string port="\\\\.\\COM5";
     hSerial = CreateFileA(
@@ -71,6 +64,49 @@ void CanReceiver::listenPort()
         }
         Sleep(10);
     }
+}*/
+
+CanReceiver::~CanReceiver()
+{
+    m_running = false;
+}
+
+void CanReceiver::listenPort()
+{
+    QTcpSocket socket;
+
+    while (m_running)
+    {
+        if (socket.state() != QAbstractSocket::ConnectedState)
+        {
+            qDebug() << "Подключение к" << m_host << ":" << m_port << "...";
+            socket.connectToHost(m_host, m_port);
+
+            if (!socket.waitForConnected(2000))
+            {
+                qWarning() << "ESP-B не найден, повтор через 2 сек:" << socket.errorString();
+                QThread::msleep(2000);
+                continue;
+            }
+            qDebug() << "Подключено к ESP-B";
+        }
+
+        if (socket.waitForReadyRead(200))
+        {
+            QByteArray chunk = socket.readAll();
+            m_buffer += chunk.toStdString();
+
+            size_t pos;
+            while ((pos = m_buffer.find('\n')) != std::string::npos)
+            {
+                std::string line = m_buffer.substr(0, pos);
+                m_buffer.erase(0, pos + 1);
+                processJson(line);
+            }
+        }
+    }
+
+    socket.close();
 }
 
 void CanReceiver::processJson(const std::string &line)
@@ -171,5 +207,45 @@ void CanReceiver::processJson(const std::string &line)
     if (obj.contains("gear")) {
         QString v = obj["gear"].toString();
         if (v != m_gear) { m_gear = v; emit gearChanged(); }
+    }
+    if (obj.contains("driverDoor")) {
+        bool v = obj["driverDoor"].toInt() != 0;
+        if (v != m_driverDoor) { m_driverDoor = v; emit driverDoorChanged(); }
+    }
+    if (obj.contains("hoodWarning")) {
+        bool v = obj["hoodWarning"].toInt() != 0;
+        if (v != m_hoodWarning) { m_hoodWarning = v; emit hoodWarningChanged(); }
+    }
+    if (obj.contains("trunkWarning")) {
+        bool v = obj["trunkWarning"].toInt() != 0;
+        if (v != m_trunkWarning) { m_trunkWarning = v; emit trunkWarningChanged(); }
+    }
+    if (obj.contains("coolantOverheat")) {
+        bool v = obj["coolantOverheat"].toInt() != 0;
+        if (v != m_coolantOverheat) { m_coolantOverheat = v; emit coolantOverheatChanged(); }
+    }
+    if (obj.contains("espOff")) {
+        bool v = obj["espOff"].toInt() != 0;
+        if (v != m_espOff) { m_espOff = v; emit espOffChanged(); }
+    }
+    if (obj.contains("brakeSystemFault")) {
+        bool v = obj["brakeSystemFault"].toInt() != 0;
+        if (v != m_brakeSystemFault) { m_brakeSystemFault = v; emit brakeSystemFaultChanged(); }
+    }
+    if (obj.contains("airbagFault")) {
+        bool v = obj["airbagFault"].toInt() != 0;
+        if (v != m_airbagFault) { m_airbagFault = v; emit airbagFaultChanged(); }
+    }
+    if (obj.contains("pressBrakePedal")) {
+        bool v = obj["pressBrakePedal"].toInt() != 0;
+        if (v != m_pressBrakePedal) { m_pressBrakePedal = v; emit pressBrakePedalChanged(); }
+    }
+    if (obj.contains("fuelLowWarning")) {
+        bool v = obj["fuelLowWarning"].toInt() != 0;
+        if (v != m_fuelLowWarning) { m_fuelLowWarning = v; emit fuelLowWarningChanged(); }
+    }
+    if (obj.contains("cruiseSetSpeed")) {
+        double v = obj["cruiseSetSpeed"].toDouble();
+        if (v != m_cruiseSetSpeed) { m_cruiseSetSpeed = v; emit cruiseSetSpeedChanged(); }
     }
 }

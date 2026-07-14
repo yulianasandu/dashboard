@@ -8,7 +8,7 @@ import Automotive.Core 1.0
 Window {
     id: root
     width: 1920
-    height: 720
+    height: 720 
     visible: true
     title: "Lada Vesta Dashboard"
     color: "#0c0c0e"
@@ -117,7 +117,14 @@ Window {
             else if (event.key === Qt.Key_Tab) {
                     tachZone.useExternalData = !tachZone.useExternalData
                     console.log("Режим изменен! Внешние данные (ESP32): " + tachZone.useExternalData)
-                }
+            }
+            else if ("cс".includes(key)) {
+                    speedZone.obcPage = (speedZone.obcPage + 1) % 4
+            }
+            else if ("vм".includes(key)) {
+                    speedZone.obcTotalFuelUsedL = 0
+                    speedZone.obcTotalDistanceKm = 0
+            }
         }
 
         Keys.onReleased: function(event) {
@@ -354,84 +361,6 @@ Window {
                 Component.onCompleted: requestPaint()
             }
 
-
-            // Стрелка тахометра
-            Item {
-                id: tachNeedleContainer
-                anchors.centerIn: parent
-                width: tachZone.dialDiam; height: tachZone.dialDiam
-                rotation: tachZone.needleAngle
-                transformOrigin: Item.Center
-                Behavior on rotation { NumberAnimation { duration: 120; easing.type: Easing.Linear } }
-
-                Shape {
-                    id: tachNeedleShape
-                    anchors.horizontalCenter: parent.horizontalCenter
-
-                    width: 50
-                    height: tachZone.dialRad * 0.65 // Оптимальный вылет для шкалы оборотов двигателя
-                    y: tachZone.dialRad - height   // Позиционирование от центра вращения вверх
-
-                    layer.enabled: true
-                    layer.samples: 4 // Идеальное сглаживание вектора при движении по кругу
-
-                    ShapePath {
-                        strokeColor: "#ffffff"
-                        strokeWidth: 2.5 // Толщина белой границы стрелки
-                        fillColor: "transparent" // Внутри пустая/прозрачная
-                        joinStyle: ShapePath.RoundJoin // Аккуратные скругленные углы
-
-                        // Старт с кончика стрелки (сверху по центру)
-                        startX: tachNeedleShape.width / 2
-                        startY: 0
-
-                        // Рисуем грани треугольника по контуру
-                        PathLine { x: tachNeedleShape.width; y: tachNeedleShape.height }
-                        PathLine { x: 0; y: tachNeedleShape.height }
-                        PathLine { x: tachNeedleShape.width / 2; y: 0 }
-                    }
-                }
-            }
-
-
-            NeedleCap {
-                anchors.centerIn: parent
-                capSize: 120
-                Text {
-                       anchors.centerIn: parent
-
-                       text: "x1000 rpm"
-                       color: "#f0f0f0"
-                       font.pixelSize: 13
-                       font.family: eurostileFont.name
-
-                       horizontalAlignment: Text.AlignHCenter
-                       verticalAlignment: Text.AlignVCenter
-                   }
-            }
-
-            // Иконка ремня безопасности, размещенная отдельно строго вверху прибора
-            Image {
-                id: topSeatbeltIcon
-                source: "qrc:/qt/qml/dashboard/icons/seatbelt.svg"
-
-                // Берем адаптивный размер иконок тахометра (10% от диаметра)
-                width: tachZone.dialDiam * 0.10
-                height: width
-                fillMode: Image.PreserveAspectFit
-
-                // Позиционирование:
-                anchors.horizontalCenter: parent.horizontalCenter // Строго по центру горизонтали
-                anchors.horizontalCenterOffset: 100
-                anchors.top: parent.top                           // Прижимаем к самому верхнему краю прибора
-
-                // РЕГУЛИРОВКА ВЫСОТЫ:
-                // Изменяйте это число (в пикселях), чтобы плавно опускать или поднимать иконку на приборе
-                anchors.topMargin: tachZone.dialDiam * 0.30
-
-                visible: tachZone.useExternalData ? CanReceiver.seatbelt       : tachZone.oilWarning
-            }
-
             Item {
                 id: tachIcons
 
@@ -445,6 +374,10 @@ Window {
                 // РАДИУСЫ ЭТАЖЕЙ:
                 property real topArcRadius: tachZone.dialRad * 0.30     // Верхний этаж (Масло, Чек, Аккумулятор)
                 property real bottomArcRadius: tachZone.dialRad * 0.58  // Нижний этаж (ABS, Ручник, Руль)
+
+                // ИСПРАВЛЕНО: Радиус для верхних иконок уменьшен с 0.76 до 0.60,
+                // чтобы они опустились ниже, ближе к шкале
+                property real upperArcRadius: tachZone.dialRad * 0.60
 
                 // СМЕЩЕНИЕ ГРУППЫ:
                 property real shiftXFrac: 0.12
@@ -500,7 +433,7 @@ Window {
                     visible: tachZone.useExternalData ? CanReceiver.absWarning     : tachZone.batteryWarning
                 }
 
-                // 5. Ручник / Восклицательный знак
+                // 5. тормоза
                 Image {
                     source: "qrc:/qt/qml/dashboard/icons/brake_system.svg"
                     width: tachIcons.iconSize; height: width
@@ -519,7 +452,123 @@ Window {
                     y: tachIcons.posY(55, tachIcons.bottomArcRadius) - height / 2
                     visible: tachZone.useExternalData ? CanReceiver.steeringWarning: tachZone.batteryWarning
                 }
+
+                // ========================================================================= //
+                // ВЕРХНИЙ БЛОК ИКОНОК (ИСПРАВЛЕНО: СИНХРОННЫЕ УГЛЫ И РАДИУС ВЫШЕ К ШКАЛЕ)    //
+                // ========================================================================= //
+
+                // 7. НАЖАТИЕ НА ТОРМОЗ (Зеленая иконка) — левее, под цифрой 3-4
+                Image {
+                    source: "qrc:/qt/qml/dashboard/icons/auto_hold.svg"
+                    width: tachIcons.iconSize; height: width
+                    fillMode: Image.PreserveAspectFit
+                    visible: tachZone.useExternalData ? CanReceiver.pressBrakePedal : false
+
+                    // ИСПРАВЛЕНО: Углы синхронизированы на 210°
+                    x: tachIcons.posX(290, tachZone.dialRad * 0.85) - width / 2
+                    y: tachIcons.posY(350, tachZone.dialRad * 0.85) - height / 2
+                }
+
+                // 8. РУЧНИК (Красная иконка)
+                Image {
+                    source: "qrc:/qt/qml/dashboard/icons/hand_brake.svg"
+                    width: tachIcons.iconSize; height: width
+                    fillMode: Image.PreserveAspectFit
+                    visible: tachZone.useExternalData ? CanReceiver.handBrake : false
+
+                    x: tachIcons.posX(270, tachZone.dialRad * 0.85) - width / 2
+                    y: tachIcons.posY(320, tachZone.dialRad * 0.85) - height / 2
+                }
+
+                // 9. РЕМЕНЬ БЕЗОПАСНОСТИ — строго по центру вверху, под цифрой 5
+                Image {
+                    source: "qrc:/qt/qml/dashboard/icons/seatbelt.svg"
+                    width: tachIcons.iconSize; height: width
+                    fillMode: Image.PreserveAspectFit
+                    visible: tachZone.useExternalData ? CanReceiver.seatbelt : tachZone.oilWarning
+
+                    // ИСПРАВЛЕНО: Углы синхронизированы на 270° (строгий верх окружности)
+                    x: tachIcons.posX(270, tachZone.dialRad * 0.85) - width / 2
+                    y: tachIcons.posY(270, tachZone.dialRad * 0.85) - height / 2
+                }
+
+                // 10. КРУИЗ-КОНТРОЛЬ (Зеленый спидометр) — правее центра, под цифрой 5-6
+                Image {
+                    source: "qrc:/qt/qml/dashboard/icons/cruise.svg"
+                    width: tachIcons.iconSize; height: width
+                    fillMode: Image.PreserveAspectFit
+                    visible: tachZone.useExternalData ? (CanReceiver.cruiseSetSpeed > 0) : false
+
+                    // ИСПРАВЛЕНО: Углы синхронизированы на 300°
+                    x: tachIcons.posX(290, tachZone.dialRad * 0.85) - width / 2
+                    y: tachIcons.posY(305, tachZone.dialRad * 0.85) - height / 2
+                }
+
+                // 11. ПОДУШКА БЕЗОПАСНОСТИ — правее, у начала красной зоны (цифра 6)
+                Image {
+                    source: "qrc:/qt/qml/dashboard/icons/airbag.svg"
+                    width: tachIcons.iconSize; height: width
+                    fillMode: Image.PreserveAspectFit
+                    visible: tachZone.useExternalData ? CanReceiver.airbagFault : false
+
+                    // ИСПРАВЛЕНО: Углы синхронизированы на 330°
+                    x: tachIcons.posX(290, tachZone.dialRad * 0.85) - width / 2
+                    y: tachIcons.posY(330, tachZone.dialRad * 0.85) - height / 2
+                }
             }
+            // Стрелка тахометра
+            Item {
+                id: tachNeedleContainer
+                anchors.centerIn: parent
+                width: tachZone.dialDiam; height: tachZone.dialDiam
+                rotation: tachZone.needleAngle
+                transformOrigin: Item.Center
+                Behavior on rotation { NumberAnimation { duration: 120; easing.type: Easing.Linear } }
+
+                Shape {
+                    id: tachNeedleShape
+                    anchors.horizontalCenter: parent.horizontalCenter
+
+                    width: 50
+                    height: tachZone.dialRad * 0.65 // Оптимальный вылет для шкалы оборотов двигателя
+                    y: tachZone.dialRad - height   // Позиционирование от центра вращения вверх
+
+                    layer.enabled: true
+                    layer.samples: 4 // Идеальное сглаживание вектора при движении по кругу
+
+                    ShapePath {
+                        strokeColor: "#ffffff"
+                        strokeWidth: 2.5 // Толщина белой границы стрелки
+                        fillColor: "#0c0c0e"
+                        joinStyle: ShapePath.RoundJoin // Аккуратные скругленные углы
+
+                        // Старт с кончика стрелки (сверху по центру)
+                        startX: tachNeedleShape.width / 2
+                        startY: 0
+
+                        // Рисуем грани треугольника по контуру
+                        PathLine { x: tachNeedleShape.width; y: tachNeedleShape.height }
+                        PathLine { x: 0; y: tachNeedleShape.height }
+                        PathLine { x: tachNeedleShape.width / 2; y: 0 }
+                    }
+                }
+            }
+            NeedleCap {
+                anchors.centerIn: parent
+                capSize: 120
+                Text {
+                       anchors.centerIn: parent
+
+                       text: "x1000 rpm"
+                       color: "#f0f0f0"
+                       font.pixelSize: 13
+                       font.family: eurostileFont.name
+
+                       horizontalAlignment: Text.AlignHCenter
+                       verticalAlignment: Text.AlignVCenter
+                   }
+            }
+
         }
 
         // ╔══════════════════════════════════════════════════════════════════╗
@@ -539,6 +588,38 @@ Window {
             property real dialRad:  dialDiam * 0.5
             property real speedFraction: (useExternalData ? CanReceiver.speed : carController.speed) / 200.0
             property real needleAngle: -120.0 + speedFraction * 240.0
+
+            // ── Бортовой компьютер (считается на стороне Qt, из уже полученных сигналов) ──
+            property real obcTankCapacityL: 55.0
+
+            property real obcCurrentSpeed: useExternalData ? CanReceiver.speed : carController.speed
+            property real obcCurrentRpm:   useExternalData ? CanReceiver.rpm   : carController.rpm
+            property real obcFuelPercent:  useExternalData ? Number(CanReceiver.fuel || 0) : 65.0
+            property real obcFuelLiters:   obcFuelPercent / 100.0 * obcTankCapacityL
+
+            property real obcInstLph:  0.55 + (obcCurrentRpm / 1000.0) * 0.42
+            property real obcInstL100: obcCurrentSpeed > 5 ? (obcInstLph / obcCurrentSpeed * 100.0) : 0
+
+            property real obcTotalFuelUsedL: 0
+            property real obcTotalDistanceKm: 0
+            property real obcAvgL100: obcTotalDistanceKm > 0.1
+                ? (obcTotalFuelUsedL / obcTotalDistanceKm * 100.0)
+                : 0
+            property real obcRangeKm: obcAvgL100 > 0.1
+                ? (obcFuelLiters / obcAvgL100 * 100.0)
+                : 999
+
+            property int  obcPage: 0        // 0=часы, 1=мгн.расход, 2=ср.расход, 3=запас хода
+            property date obcNow: new Date()
+
+            Timer {
+                interval: 1000; running: true; repeat: true
+                onTriggered: {
+                    speedZone.obcTotalFuelUsedL  += speedZone.obcInstLph / 3600.0
+                    speedZone.obcTotalDistanceKm += speedZone.obcCurrentSpeed / 3600.0
+                    speedZone.obcNow = new Date()
+                }
+            }
 
             ChromeWell { anchors.centerIn: parent; dialSize: speedZone.dialDiam }
 
@@ -669,7 +750,7 @@ Window {
                     fillMode: Image.PreserveAspectFit
                     x: speedIcons.posX(-140) // Раздвинули сильнее влево (в район цифры 60)
                     y: speedIcons.posY(-140)
-                    visible: speedZone.useExternalData ? CanReceiver.doorsWarning : true
+                    visible: speedZone.useExternalData ? CanReceiver.hoodWarning : true
                 }
 
                 // 2. Иконка открытых дверей (Левее центра)
@@ -680,7 +761,7 @@ Window {
                     fillMode: Image.PreserveAspectFit
                     x: speedIcons.posX(-115) // Встает под цифру 80-100
                     y: speedIcons.posY(-115)
-                    visible: speedZone.useExternalData ? CanReceiver.doorsWarning : true
+                    visible: speedZone.useExternalData ? CanReceiver.driverDoor : true
                 }
 
                 // 3. Иконка аварийки / общего предупреждения (СТРОГО ПО СЕРЕДИНЕ)
@@ -691,7 +772,9 @@ Window {
                     fillMode: Image.PreserveAspectFit
                     x: speedIcons.posX(-90) // Строго по центру вверху (под цифрой 100)
                     y: speedIcons.posY(-90)
-                    visible: speedZone.useExternalData ? CanReceiver.doorsWarning : true
+                    visible: speedZone.useExternalData
+                            ? (CanReceiver.driverDoor || CanReceiver.hoodWarning || CanReceiver.trunkWarning)
+                            : true
                 }
 
                 // 4. Иконка открытого багажника (Правее центра)
@@ -702,7 +785,7 @@ Window {
                     fillMode: Image.PreserveAspectFit
                     x: speedIcons.posX(-65) // Сдвинули правее (под цифру 120)
                     y: speedIcons.posY(-65)
-                    visible: speedZone.useExternalData ? CanReceiver.doorsWarning : true
+                    visible: speedZone.useExternalData ? CanReceiver.trunkWarning : true
                 }
             }
 
@@ -733,7 +816,7 @@ Window {
                         // Белый цвет контура и прозрачность внутри
                         strokeColor: "#ffffff"
                         strokeWidth: 2.5 // Толщина белой линии стрелки
-                        fillColor: "transparent" // Внутри пустая/прозрачная
+                        fillColor: "#0c0c0e"
                         joinStyle: ShapePath.RoundJoin // Скругленные аккуратные углы
 
                         // Начинаем рисовать с кончика стрелки (сверху по центру)
@@ -809,11 +892,6 @@ Window {
                 width:  speedZone.dialDiam * 0.53
                 height: speedZone.dialDiam * 0.19
 
-                // Таймер системного времени
-                Timer {
-                    interval: 1000; running: true; repeat: true
-                    onTriggered: clockText.text = Qt.formatDateTime(new Date(), "hh:mm")
-                }
 
                 // ── ВЕРХНЯЯ СТРОКА: GEAR | ODO | VOLT (без подписей) ─────────
                 Item {
@@ -909,7 +987,14 @@ Window {
                     Text {
                         id: clockText
                         anchors.centerIn: parent
-                        text: Qt.formatDateTime(new Date(), "hh:mm")
+                        text: {
+                            switch (speedZone.obcPage) {
+                                case 1:  return speedZone.obcInstL100.toFixed(1) + " л/100"
+                                case 2:  return speedZone.obcAvgL100.toFixed(1)  + " л/100"
+                                case 3:  return Math.round(speedZone.obcRangeKm) + " км"
+                                default: return Qt.formatDateTime(speedZone.obcNow, "hh:mm")
+                            }
+                        }
                         color: "#c8c8d8"
                         font { pixelSize: speedZone.dialDiam * 0.041; bold: true; family: eurostileFont.name }
                     }
@@ -1171,7 +1256,7 @@ Window {
                     ShapePath {
                         strokeColor: "#ffffff"
                         strokeWidth: 2.5 // Толщина белой границы
-                        fillColor: "transparent" // Полая/прозрачная внутри, как у спидометра
+                        fillColor: "#0c0c0e"
                         joinStyle: ShapePath.RoundJoin
 
                         // Начинаем с кончика (сверху по центру)
@@ -1212,7 +1297,7 @@ Window {
                     ShapePath {
                         strokeColor: "#ffffff"
                         strokeWidth: 2.5 // Толщина белой границы
-                        fillColor: "transparent" // Прозрачная внутри
+                        fillColor: "#0c0c0e"
                         joinStyle: ShapePath.RoundJoin
 
                         // Кончик треугольника сверху по центру
@@ -1310,9 +1395,6 @@ Window {
                     }
                 }
 
-                // =========================================================================
-                // 2. ИКОНКА МАШИНЫ ESC (Теперь НАПРАВО ВНУТРЬ прибора)
-                // =========================================================================
                 Image {
                     id: escIcon
                     source: "qrc:/qt/qml/dashboard/icons/esc_off.svg"
@@ -1332,6 +1414,43 @@ Window {
 
                     visible: rightZone.useExternalData ? CanReceiver.escWarning : rightZone.lightWarning
                 }
+
+                Image {
+                    id: espIcon
+                    source: "qrc:/qt/qml/dashboard/icons/esp_off.svg"
+                    width: temp_fuelIcons.carIconSize
+                    height: width
+                    fillMode: Image.PreserveAspectFit
+
+                    property real angleY: 10
+                    property real angleX: 40
+
+                    x: (temp_fuelIcons.width / 2)
+                       + Math.cos(angleX * Math.PI / 180) * temp_fuelIcons.carRadius
+                       - width / 2
+                    y: (temp_fuelIcons.height / 2)
+                       + Math.sin(angleY * Math.PI / 180) * temp_fuelIcons.carRadius
+                       - height / 2
+
+                    visible: rightZone.useExternalData ? CanReceiver.espOff : rightZone.lightWarning
+                }
+
+                Image {
+                    source: "qrc:/qt/qml/dashboard/icons/coolant_overheat.svg"
+                    width: temp_fuelIcons.carIconSize
+                    height: width
+                    fillMode: Image.PreserveAspectFit
+
+                    // Настройки положения: угол 330 градусов (верхний правый сектор)
+                    property real angleDeg: 330
+                    property real radiusFrac: 0.58 // Равномерный отступ от центра, как у топлива
+
+                    x: (temp_fuelIcons.width / 2) + Math.cos(angleDeg * Math.PI / 180) * (rightZone.dialRad * radiusFrac) - width / 2
+                    y: (temp_fuelIcons.height / 2) + Math.sin(angleDeg * Math.PI / 180) * (rightZone.dialRad * radiusFrac) - height / 2
+
+                    visible: rightZone.useExternalData ? CanReceiver.coolantOverheat : false
+                }
+
 
                 // =========================================================================
                 // 3. КРИТИЧЕСКИЙ УРОВЕНЬ ТОПЛИВА (На своем законном месте)
@@ -1353,7 +1472,7 @@ Window {
                        - height / 2
 
                     visible: rightZone.useExternalData
-                        ? Number(CanReceiver.fuel || 0) < 15
+                        ? CanReceiver.fuelLowWarning
                         : rightZone.lightWarning
                 }
             }

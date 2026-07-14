@@ -2,9 +2,8 @@
 
 #include <QObject>
 #include <QQmlEngine>
-#include <windows.h>
+#include <QTcpSocket>
 #include <string>
-#include <QString>
 
 
 class CanReceiver : public QObject
@@ -39,6 +38,16 @@ class CanReceiver : public QObject
     Q_PROPERTY(bool position READ position NOTIFY positionChanged)
     Q_PROPERTY(bool fogFront READ fogFront NOTIFY fogFrontChanged)
     Q_PROPERTY(bool fogRear  READ fogRear  NOTIFY fogRearChanged)
+    Q_PROPERTY(bool driverDoor  READ driverDoor  NOTIFY driverDoorChanged)
+    Q_PROPERTY(bool hoodWarning READ hoodWarning NOTIFY hoodWarningChanged)
+    Q_PROPERTY(bool trunkWarning READ trunkWarning NOTIFY trunkWarningChanged)
+    Q_PROPERTY(bool coolantOverheat  READ coolantOverheat  NOTIFY coolantOverheatChanged)
+    Q_PROPERTY(bool espOff           READ espOff           NOTIFY espOffChanged)
+    Q_PROPERTY(bool brakeSystemFault READ brakeSystemFault NOTIFY brakeSystemFaultChanged)
+    Q_PROPERTY(bool airbagFault      READ airbagFault      NOTIFY airbagFaultChanged)
+    Q_PROPERTY(bool pressBrakePedal  READ pressBrakePedal  NOTIFY pressBrakePedalChanged)
+    Q_PROPERTY(bool fuelLowWarning   READ fuelLowWarning   NOTIFY fuelLowWarningChanged)
+    Q_PROPERTY(double cruiseSetSpeed READ cruiseSetSpeed   NOTIFY cruiseSetSpeedChanged)
 
 
 public:
@@ -72,6 +81,16 @@ public:
     bool position() const { return m_position; }
     bool fogFront() const { return m_fogFront; }
     bool fogRear()  const { return m_fogRear; }
+    bool driverDoor() const { return m_driverDoor; }
+    bool hoodWarning() const { return m_hoodWarning; }
+    bool trunkWarning() const { return m_trunkWarning; }
+    bool coolantOverheat() const { return m_coolantOverheat; }
+    bool espOff() const { return m_espOff; }
+    bool brakeSystemFault() const { return m_brakeSystemFault; }
+    bool airbagFault() const { return m_airbagFault; }
+    bool pressBrakePedal() const { return m_pressBrakePedal; }
+    bool fuelLowWarning() const { return m_fuelLowWarning; }
+    double cruiseSetSpeed() const { return m_cruiseSetSpeed; }
 
 
 signals:
@@ -101,14 +120,24 @@ signals:
     void positionChanged();
     void fogFrontChanged();
     void fogRearChanged();
+    void driverDoorChanged();
+    void hoodWarningChanged();
+    void trunkWarningChanged();
+    void coolantOverheatChanged();
+    void espOffChanged();
+    void brakeSystemFaultChanged();
+    void airbagFaultChanged();
+    void pressBrakePedalChanged();
+    void fuelLowWarningChanged();
+    void cruiseSetSpeedChanged();
 
 private:
 
     void listenPort();
     void processJson(const std::string &line);
 
-
-    HANDLE hSerial = INVALID_HANDLE_VALUE;
+    QString m_host = "127.0.0.1"; // при подключении ESP - сюда его IP
+    quint16 m_port = 3333;
 
     bool m_running = true;
 
@@ -140,4 +169,14 @@ private:
     bool m_position = false;
     bool m_fogFront = false;
     bool m_fogRear  = false;
+    bool m_driverDoor = false;
+    bool m_hoodWarning = false;
+    bool m_trunkWarning = false;
+    bool m_coolantOverheat = false;
+    bool m_espOff = false;
+    bool m_brakeSystemFault = false;
+    bool m_airbagFault = false;
+    bool m_pressBrakePedal = false;
+    bool m_fuelLowWarning = false;
+    double m_cruiseSetSpeed = 0;
 };
